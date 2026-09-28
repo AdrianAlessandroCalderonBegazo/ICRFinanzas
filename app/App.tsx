@@ -9,7 +9,7 @@ import { useFonts, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, M
 import { APP_BACKGROUND, C } from "./src/theme";
 import { money, num, fdate, today } from "./src/lib/format";
 import { emptyEgr, emptyIng, loadStore, saveStore, SAMPLES, type Egreso, type Ingreso, type Mov } from "./src/lib/data";
-import { analizarComprobante } from "./src/lib/analyze";
+import { leerComprobante } from "./src/lib/ocr";
 import { Home } from "./src/screens/Home";
 import { IngresoForm, type Errors } from "./src/screens/IngresoForm";
 import { EgresoMetodo } from "./src/screens/EgresoMetodo";
@@ -21,7 +21,8 @@ type ScreenName = "home" | "ingreso" | "metodo" | "captura" | "egreso";
 type Filter = "Todos" | "Ingresos" | "Egresos";
 
 const IDLE_CAP: CapState = { status: "idle", uri: null, step: 0, error: null };
-const MAX_SIDE = 1600; // keeps the upload well under the API's per-image limit
+const MAX_SIDE = 2000; // plenty for OCR, keeps memory use low on big camera photos
+const MIN_SCAN_MS = 1800; // OCR is near-instant; keep the scan checklist visible long enough to read
 
 export default function App() {
   const [fontsLoaded] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold });
@@ -180,7 +181,7 @@ function CajaDeObra() {
     }, 650);
 
     try {
-      const data = await work(ctrl.signal);
+      const [data] = await Promise.all([work(ctrl.signal), new Promise((r) => setTimeout(r, MIN_SCAN_MS))]);
       if (ctrl.signal.aborted) return;
       clearInterval(tick);
       setCap((c) => ({ ...c, step: 4 }));
@@ -203,8 +204,8 @@ function CajaDeObra() {
     const longSide = Math.max(asset.width, asset.height);
     const ctx = ImageManipulator.manipulate(asset.uri);
     if (longSide > MAX_SIDE) ctx.resize(asset.width >= asset.height ? { width: MAX_SIDE } : { height: MAX_SIDE });
-    const img = await (await ctx.renderAsync()).saveAsync({ base64: true, compress: 0.8, format: SaveFormat.JPEG });
-    runCapture(img.uri, (signal) => analizarComprobante(img.base64 ?? "", "image/jpeg", signal));
+    const img = await (await ctx.renderAsync()).saveAsync({ compress: 0.9, format: SaveFormat.JPEG });
+    runCapture(img.uri, () => leerComprobante(img.uri));
   };
 
   const readError = () => setCap({ ...IDLE_CAP, error: "No se pudo leer la imagen." });
@@ -226,7 +227,7 @@ function CajaDeObra() {
     runCapture(null, (signal) =>
       new Promise<Egreso>((resolve, reject) => {
         const s = SAMPLES[Math.floor(Math.random() * SAMPLES.length)];
-        const id = setTimeout(() => resolve({ ...s, fecha: today() }), 2600);
+        const id = setTimeout(() => resolve({ ...s, fecha: today() }), 800);
         signal.addEventListener("abort", () => {
           clearTimeout(id);
           reject(new Error("cancelado"));

@@ -1,11 +1,11 @@
 # ICR Finanzas — Caja de Obra
 
-App Android para registrar **ingresos y egresos** de obra con el saldo de la cuenta **en vivo**, en estilo *glassmorphism* (diseño "Caja de Obra Glass").
+App Android para registrar **ingresos y egresos** de obra con el saldo de la cuenta **en vivo**, en estilo *glassmorphism* (diseño "Caja de Obra Glass"). Funciona **sin internet**.
 
 ```
 app/      App Android (Expo · React Native · TypeScript)
-server/   Servidor que analiza fotos de comprobantes con Claude (Node · TypeScript)
 design/   Diseño original exportado de Claude Design (prototipo HTML + conversación)
+.github/  GitHub Actions que genera el APK
 ```
 
 ## Qué hace
@@ -14,58 +14,43 @@ design/   Diseño original exportado de Claude Design (prototipo HTML + conversa
 - **Ingreso**: fecha, tipo (Obra / Proyecto, Venta, Otro), detalle opcional y monto. Muestra el nuevo saldo antes de confirmar.
 - **Egreso** — dos formas:
   - **Manual**: fecha, ciudad, persona, descripción, categoría (Equipos, Caja chica, Movilidad, Material, Sueldo, Oficina, Fletes, Viáticos) y monto.
-  - **Con captura**: sube una foto (galería o cámara) de la boleta, factura, voucher o transferencia. El servidor la analiza con Claude y el formulario se llena solo; los campos detectados llevan la marca **AUTO** y se pueden corregir.
+  - **Con captura**: sube una foto (galería o cámara) de la boleta, factura, ticket o captura de Yape/Plin/transferencia. El texto se lee **en el teléfono** con Google ML Kit (OCR, sin internet ni costo) y el formulario se llena solo; los campos detectados llevan la marca **AUTO** y se pueden corregir.
 - Ambos formularios terminan en una **hoja de confirmación** con el resumen y el saldo resultante antes de registrar.
 - Los datos se guardan en el teléfono (AsyncStorage).
 
-## 1. Servidor de análisis
+### Qué detecta el OCR
 
-La clave de la API de Anthropic vive solo en el servidor (nunca dentro del APK).
-
-```bash
-cd server
-npm install
-export ANTHROPIC_API_KEY=sk-ant-...
-# opcional: exige este token en cada solicitud de la app
-export APP_TOKEN=un-secreto
-npm start            # escucha en http://0.0.0.0:8787
-```
-
-Endpoint: `POST /api/analizar-comprobante` con `{ "image": "<base64>", "mediaType": "image/jpeg" }` → `{ fecha, persona, descripcion, ciudad, categoria, monto }`.
-Usa el modelo `claude-opus-5` con salida estructurada y *fallback* automático del servidor ante rechazos.
-
-Para usarlo desde el celular, el servidor debe ser accesible desde la red del teléfono (misma Wi‑Fi usando la IP de tu PC, o desplegado en un servicio como Render, Railway o Fly.io).
-
-## 2. App Android
-
-```bash
-cd app
-npm install
-cp .env.example .env     # pon la URL del servidor en EXPO_PUBLIC_API_URL
-npx expo start           # escanea el QR con Expo Go en Android
-```
-
-Variables (`app/.env`):
-
-| Variable | Descripción |
+| Campo | Cómo |
 |---|---|
-| `EXPO_PUBLIC_API_URL` | URL del servidor, p. ej. `http://192.168.1.50:8787` |
-| `EXPO_PUBLIC_APP_TOKEN` | Opcional. Debe coincidir con `APP_TOKEN` del servidor |
+| Monto | Línea de *TOTAL / IMPORTE TOTAL / Yapeaste…* (ignora subtotal, IGV, vuelto); si no hay, el mayor monto con `S/` |
+| Fecha | `dd/mm/aaaa`, `aaaa-mm-dd`, `27 set. 2026`, `24 de septiembre de 2026`… (prioriza la línea "Fecha/Emisión") |
+| Persona | Destinatario en Yape/Plin/transferencias; razón social (S.A.C., E.I.R.L., …) en boletas y facturas |
+| Ciudad | Ciudades del Perú y distritos de Lima que aparezcan en la dirección |
+| Categoría | Palabras clave (cemento → Material, combustible → Movilidad, flete → Fletes, menú → Viáticos, …) |
+| Descripción | Primera línea de producto relacionada con la categoría, o "Transferencia a …" |
 
-Sin servidor configurado, el botón **"Probar con comprobante de ejemplo"** sigue funcionando con datos de muestra.
+Las reglas están en `app/src/lib/parseComprobante.ts` y tienen pruebas en `parseComprobante.test.ts`.
 
-### Generar el APK
+## Descargar el APK (GitHub Actions)
 
-```bash
-cd app
-npx eas-cli@latest build -p android --profile preview   # APK en la nube (requiere cuenta Expo)
-# o, con Android Studio instalado:
-npx expo run:android
-```
+Cada `push` a `main` que toque `app/` genera el APK automáticamente:
+
+1. En GitHub abre la pestaña **Actions → APK Android** y entra a la última ejecución.
+2. Baja el archivo en **Artifacts** (`ICR-Finanzas-apk-N`), descomprime el `.zip` y pasa el `.apk` al teléfono.
+3. En Android, permite "instalar apps de origen desconocido" y ábrelo.
+
+También puedes lanzarlo a mano con **Run workflow**. Si subes un tag `v1.0.0`, el APK además queda adjunto en **Releases**.
+
+> El APK está firmado con la clave de depuración: sirve para instalarlo directamente en los teléfonos del equipo. Para publicarlo en Google Play habría que configurar una clave de firma propia.
 
 ## Desarrollo
 
 ```bash
-cd app && npm run typecheck
-cd server && npm run typecheck
+cd app
+npm install
+npm run typecheck
+npm test
+npx expo run:android     # requiere Android Studio / SDK instalado
 ```
+
+El OCR usa un módulo nativo, por eso la app **no funciona en Expo Go**; usa el APK o `expo run:android`.
