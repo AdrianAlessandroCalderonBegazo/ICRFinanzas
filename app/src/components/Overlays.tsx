@@ -1,0 +1,115 @@
+import { useEffect, useRef } from "react";
+import { Animated, Easing, Pressable, Text, View } from "react-native";
+import { C, kicker, t } from "../theme";
+import { PrimaryButton, SecondaryButton } from "./ui";
+
+export type SheetData = {
+  kicker: string;
+  amount: string;
+  amountColor: string;
+  rows: [string, string][];
+  newBalance: string;
+  cta: string;
+};
+
+/** Bottom sheet: "CONFIRMA TU INGRESO/EGRESO" with the summary and the final register button. */
+export function ConfirmSheet({ data, onConfirm, onClose, bottomInset }: { data: SheetData; onConfirm: () => void; onClose: () => void; bottomInset: number }) {
+  const fade = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(600)).current;
+  useEffect(() => {
+    Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+    Animated.timing(slide, { toValue: 0, duration: 280, easing: Easing.bezier(0.2, 0.8, 0.2, 1), useNativeDriver: true }).start();
+  }, [fade, slide]);
+
+  return (
+    <Animated.View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 5, backgroundColor: "rgba(13,34,51,.5)", opacity: fade, justifyContent: "flex-end" }}>
+      <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Cerrar" />
+      <Animated.View
+        style={{
+          backgroundColor: "rgba(18,44,64,.94)",
+          borderTopWidth: 1,
+          borderTopColor: "rgba(255,255,255,.22)",
+          borderTopLeftRadius: 26,
+          borderTopRightRadius: 26,
+          paddingTop: 10,
+          paddingHorizontal: 22,
+          paddingBottom: 24 + bottomInset,
+          transform: [{ translateY: slide }],
+        }}
+      >
+        <View style={{ width: 40, height: 4, borderRadius: 4, backgroundColor: "rgba(255,255,255,.22)", alignSelf: "center", marginBottom: 18 }} />
+        <Text style={kicker()}>{data.kicker}</Text>
+        <Text style={t(30, 800, data.amountColor, { marginTop: 6, marginBottom: 16, fontVariant: ["tabular-nums"] })}>{data.amount}</Text>
+        <View style={{ borderWidth: 1, borderColor: "rgba(255,255,255,.16)", borderRadius: 14, overflow: "hidden", marginBottom: 14 }}>
+          {data.rows.map(([k, v], i) => (
+            <View
+              key={k}
+              style={{ flexDirection: "row", justifyContent: "space-between", gap: 12, paddingVertical: 11, paddingHorizontal: 14, borderTopWidth: i ? 1 : 0, borderTopColor: C.divider }}
+            >
+              <Text style={t(12.5, 400, C.muted)}>{k}</Text>
+              <Text style={t(12.5, 700, C.text, { textAlign: "right", flexShrink: 1 })}>{v}</Text>
+            </View>
+          ))}
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            backgroundColor: "rgba(255,255,255,.08)",
+            borderRadius: 12,
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            marginBottom: 18,
+          }}
+        >
+          <Text style={t(12, 400, C.muted)}>Saldo después del registro</Text>
+          <Text style={t(14, 800)}>{data.newBalance}</Text>
+        </View>
+        <View style={{ gap: 10 }}>
+          <PrimaryButton label={data.cta} onPress={onConfirm} />
+          <SecondaryButton label="Volver a editar" onPress={onClose} />
+        </View>
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
+export function SuccessToast({ title, sub, topInset }: { title: string; sub: string; topInset: number }) {
+  const a = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(a, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+  }, [a]);
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={{
+        position: "absolute",
+        left: 18,
+        right: 18,
+        top: 18 + topInset,
+        zIndex: 6,
+        backgroundColor: "rgba(40,70,92,.92)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,.25)",
+        borderRadius: 16,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        boxShadow: "0px 10px 30px rgba(13,34,51,0.3)",
+        opacity: a,
+        transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+      }}
+    >
+      <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: C.mint, alignItems: "center", justifyContent: "center" }}>
+        <Text style={t(15, 800, C.ink)}>✓</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={t(13, 800)}>{title}</Text>
+        <Text style={t(11.5, 400, "rgba(255,255,255,.8)", { marginTop: 2 })}>{sub}</Text>
+      </View>
+    </Animated.View>
+  );
+}
