@@ -7,12 +7,11 @@ export type CapState = { status: "idle" | "busy"; uri: string | null; step: numb
 
 const STEPS = ["Leyendo imagen", "Detectando monto y fecha", "Identificando proveedor", "Sugiriendo categoría"];
 
-export function Captura({ cap, onBack, onGallery, onCamera, onSample, onCancel, topInset, bottomInset }: {
+export function Captura({ cap, onBack, onGallery, onCamera, onCancel, topInset, bottomInset }: {
   cap: CapState;
   onBack: () => void;
   onGallery: () => void;
   onCamera: () => void;
-  onSample: () => void;
   onCancel: () => void;
   topInset: number;
   bottomInset: number;
@@ -45,30 +44,13 @@ export function Captura({ cap, onBack, onGallery, onCamera, onSample, onCancel, 
             </Pressable>
             <ErrorText>{cap.error}</ErrorText>
             <SecondaryButton label="Tomar foto con la cámara" onPress={onCamera} />
-            <SecondaryButton label="Probar con comprobante de ejemplo" onPress={onSample} />
           </>
         ) : (
           <>
             <View style={{ height: 340, borderRadius: 18, overflow: "hidden", backgroundColor: "rgba(0,0,0,.35)", borderWidth: 1, borderColor: "rgba(255,255,255,.18)" }}>
               {cap.uri ? (
                 <Image source={{ uri: cap.uri }} resizeMode="contain" style={{ width: "100%", height: "100%", opacity: 0.85 }} accessibilityLabel="Comprobante" />
-              ) : (
-                <View
-                  style={{
-                    position: "absolute",
-                    top: 24,
-                    bottom: 24,
-                    left: 60,
-                    right: 60,
-                    borderRadius: 8,
-                    backgroundColor: "rgba(255,255,255,.09)",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text style={{ fontFamily: "monospace", fontSize: 11, color: C.muted }}>comprobante de ejemplo</Text>
-                </View>
-              )}
+              ) : null}
               <ScanLine />
             </View>
             <View style={[glass(0.09, 0.16, 16), { paddingVertical: 14, paddingHorizontal: 16, gap: 10 }]}>

@@ -7,17 +7,18 @@ import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { useFonts, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold } from "@expo-google-fonts/manrope";
 
 import { APP_BACKGROUND, C } from "./src/theme";
-import { money, num, fdate, today } from "./src/lib/format";
-import { emptyEgr, emptyIng, loadStore, saveStore, SAMPLES, type Egreso, type Ingreso, type Mov } from "./src/lib/data";
+import { money, num, fdate } from "./src/lib/format";
+import { DEFAULT_CUENTA, emptyEgr, emptyIng, loadStore, saveStore, type Cuenta, type Egreso, type Ingreso, type Mov } from "./src/lib/data";
 import { leerComprobante } from "./src/lib/ocr";
 import { Home } from "./src/screens/Home";
 import { IngresoForm, type Errors } from "./src/screens/IngresoForm";
 import { EgresoMetodo } from "./src/screens/EgresoMetodo";
 import { Captura, type CapState } from "./src/screens/Captura";
 import { EgresoForm } from "./src/screens/EgresoForm";
+import { CuentaForm } from "./src/screens/CuentaForm";
 import { ConfirmSheet, SuccessToast, type SheetData } from "./src/components/Overlays";
 
-type ScreenName = "home" | "ingreso" | "metodo" | "captura" | "egreso";
+type ScreenName = "home" | "cuenta" | "ingreso" | "metodo" | "captura" | "egreso";
 type Filter = "Todos" | "Ingresos" | "Egresos";
 
 const IDLE_CAP: CapState = { status: "idle", uri: null, step: 0, error: null };
@@ -41,6 +42,7 @@ function CajaDeObra() {
   const [ready, setReady] = useState(false);
   const [screen, setScreen] = useState<ScreenName>("home");
   const [balance, setBalance] = useState(0);
+  const [cuenta, setCuenta] = useState<Cuenta>(DEFAULT_CUENTA);
   const [display, setDisplay] = useState(0);
   const [movs, setMovs] = useState<Mov[]>([]);
   const [ing, setIng] = useState<Ingreso>(emptyIng);
@@ -63,6 +65,7 @@ function CajaDeObra() {
   useEffect(() => {
     loadStore().then((s) => {
       setBalance(s.balance);
+      setCuenta(s.cuenta);
       setDisplay(s.balance);
       setMovs(s.movs);
       setReady(true);
@@ -138,7 +141,7 @@ function CajaDeObra() {
     const from = balance;
     const to = +(from + (kind === "in" ? amt : -amt)).toFixed(2);
     const nextMovs = [mov, ...movs];
-    saveStore({ balance: to, movs: nextMovs });
+    saveStore({ balance: to, cuenta, movs: nextMovs });
 
     setScreen("home");
     setSheet(null);
@@ -157,6 +160,19 @@ function CajaDeObra() {
     later(() => tween(from, to), 250);
     later(() => setSuccess(null), 2600);
     later(() => setHlId(null), 3000);
+  };
+
+  /** Saves the account data; a new balance replaces the old one (no movement is recorded). */
+  const saveCuenta = (next: Cuenta, nextBalance: number) => {
+    const from = balance;
+    saveStore({ balance: nextBalance, cuenta: next, movs });
+    setCuenta(next);
+    setBalance(nextBalance);
+    setDisplay(from);
+    go("home");
+    setSuccess({ title: "Cuenta actualizada", sub: `${next.nombre} · saldo ${money(nextBalance)}` });
+    if (nextBalance !== from) later(() => tween(from, nextBalance), 250);
+    later(() => setSuccess(null), 2600);
   };
 
   // ---- Captura -------------------------------------------------------------
@@ -222,19 +238,6 @@ function CajaDeObra() {
     if (!res.canceled && res.assets[0]) analyzeAsset(res.assets[0]).catch(readError);
   };
 
-  /** Offline demo: no photo, fills the form with one of the sample receipts. */
-  const useSample = () =>
-    runCapture(null, (signal) =>
-      new Promise<Egreso>((resolve, reject) => {
-        const s = SAMPLES[Math.floor(Math.random() * SAMPLES.length)];
-        const id = setTimeout(() => resolve({ ...s, fecha: today() }), 800);
-        signal.addEventListener("abort", () => {
-          clearTimeout(id);
-          reject(new Error("cancelado"));
-        });
-      }),
-    );
-
   // ---- Navigation ----------------------------------------------------------
 
   const backToMetodo = () => {
@@ -253,7 +256,7 @@ function CajaDeObra() {
       setSheet(null);
       return true;
     }
-    if (screen === "ingreso" || screen === "metodo") go("home");
+    if (screen === "ingreso" || screen === "metodo" || screen === "cuenta") go("home");
     else if (screen === "captura") backToMetodo();
     else if (screen === "egreso") backFromEgreso();
     else return false;
@@ -268,9 +271,10 @@ function CajaDeObra() {
 
   const iAmt = num(ing.monto);
   const eAmt = num(egr.monto);
+  const cuentaLabel = cuenta.numero ? `${cuenta.nombre} · ${cuenta.numero}` : cuenta.nombre;
   let sheetData: SheetData | null = null;
   if (sheet === "in") {
-    const rows: [string, string][] = [["Fecha", fdate(ing.fecha)], ["Tipo", ing.tipo]];
+    const rows: [string, string][] = [["Cuenta", cuentaLabel], ["Fecha", fdate(ing.fecha)], ["Tipo", ing.tipo]];
     if (ing.detalle.trim()) rows.push(["Detalle", ing.detalle.trim()]);
     sheetData = { kicker: "CONFIRMA TU INGRESO", amount: `+${money(iAmt)}`, amountColor: C.cyan, rows, newBalance: money(balance + iAmt), cta: "REGISTRAR INGRESO" };
   } else if (sheet === "out") {
@@ -279,6 +283,7 @@ function CajaDeObra() {
       amount: `−${money(eAmt)}`,
       amountColor: C.red,
       rows: [
+        ["Cuenta", cuentaLabel],
         ["Fecha", fdate(egr.fecha)],
         ["Persona", egr.persona],
         ["Descripción", egr.desc],
@@ -298,6 +303,8 @@ function CajaDeObra() {
       {screen === "home" && (
         <Home
           display={display}
+          cuenta={cuenta}
+          onCuenta={() => go("cuenta")}
           movs={movs}
           hlId={hlId}
           filter={filter}
@@ -313,6 +320,7 @@ function CajaDeObra() {
           {...inset}
         />
       )}
+      {screen === "cuenta" && <CuentaForm cuenta={cuenta} balance={balance} onBack={() => go("home")} onSave={saveCuenta} {...inset} />}
       {screen === "ingreso" && <IngresoForm ing={ing} set={setIngField} err={err} balance={balance} onBack={() => go("home")} onReview={reviewIngreso} {...inset} />}
       {screen === "metodo" && (
         <EgresoMetodo
@@ -328,7 +336,7 @@ function CajaDeObra() {
         />
       )}
       {screen === "captura" && (
-        <Captura cap={cap} onBack={backToMetodo} onGallery={pickFromGallery} onCamera={takePhoto} onSample={useSample} onCancel={cancelCapture} {...inset} />
+        <Captura cap={cap} onBack={backToMetodo} onGallery={pickFromGallery} onCamera={takePhoto} onCancel={cancelCapture} {...inset} />
       )}
       {screen === "egreso" && (
         <EgresoForm

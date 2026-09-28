@@ -10,10 +10,11 @@ design/   Diseño original exportado de Claude Design (prototipo HTML + conversa
 
 ## Qué hace
 
-- **Inicio**: saldo en cuenta con indicador *EN VIVO* y animación al cambiar, totales de ingresos/egresos del mes, lista de movimientos con filtro (Todos / Ingresos / Egresos).
+- **Inicio**: saldo en cuenta con indicador *EN VIVO* y animación al cambiar, nombre y número de la cuenta bancaria, totales de ingresos/egresos del mes, lista de movimientos con filtro (Todos / Ingresos / Egresos).
+- **Cuenta y saldo**: toca la tarjeta del saldo (✎ Editar) para cambiar el nombre de la cuenta, el número de cuenta y el saldo actual. Cambiar el saldo no crea un movimiento.
 - **Ingreso**: fecha, tipo (Obra / Proyecto, Venta, Otro), detalle opcional y monto. Muestra el nuevo saldo antes de confirmar.
 - **Egreso** — dos formas:
-  - **Manual**: fecha, ciudad, persona, descripción, categoría (Equipos, Caja chica, Movilidad, Material, Sueldo, Oficina, Fletes, Viáticos) y monto.
+  - **Manual**: fecha, ciudad (sugerencias: Moquegua y Arequipa), persona, descripción, categoría (Equipos, Caja chica, Movilidad, Material, Sueldo, Oficina, Fletes, Viáticos) y monto.
   - **Con captura**: sube una foto (galería o cámara) de la boleta, factura, ticket o captura de Yape/Plin/transferencia. El texto se lee **en el teléfono** con Google ML Kit (OCR, sin internet ni costo) y el formulario se llena solo; los campos detectados llevan la marca **AUTO** y se pueden corregir.
 - Ambos formularios terminan en una **hoja de confirmación** con el resumen y el saldo resultante antes de registrar.
 - Los datos se guardan en el teléfono (AsyncStorage).

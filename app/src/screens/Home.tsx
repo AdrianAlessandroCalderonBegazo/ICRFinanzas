@@ -3,12 +3,14 @@ import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 import { C, glass, kicker, t } from "../theme";
 import { LiveDot } from "../components/ui";
 import { clock, fdate, money, today } from "../lib/format";
-import type { Mov } from "../lib/data";
+import type { Cuenta, Mov } from "../lib/data";
 
 type Filter = "Todos" | "Ingresos" | "Egresos";
 
-export function Home({ display, movs, hlId, filter, setFilter, onIngreso, onEgreso, topInset, bottomInset }: {
+export function Home({ display, cuenta, onCuenta, movs, hlId, filter, setFilter, onIngreso, onEgreso, topInset, bottomInset }: {
   display: number;
+  cuenta: Cuenta;
+  onCuenta: () => void;
   movs: Mov[];
   hlId: number | null;
   filter: Filter;
@@ -60,13 +62,30 @@ export function Home({ display, movs, hlId, filter, setFilter, onIngreso, onEgre
           </View>
         </View>
 
-        <View style={[glass(0.1, 0.22, 22), { paddingTop: 18, paddingHorizontal: 18, paddingBottom: 16, boxShadow: "inset 0px 1px 0px rgba(255,255,255,0.25)" }]}>
-          <Text style={kicker("rgba(255,255,255,.9)")}>SALDO EN CUENTA</Text>
+        <Pressable
+          onPress={onCuenta}
+          accessibilityLabel="Editar cuenta y saldo"
+          style={({ pressed }) => [
+            glass(0.1, 0.22, 22),
+            { paddingTop: 18, paddingHorizontal: 18, paddingBottom: 16, boxShadow: "inset 0px 1px 0px rgba(255,255,255,0.25)" },
+            pressed && { backgroundColor: "rgba(255,255,255,.14)" },
+          ]}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text style={kicker("rgba(255,255,255,.9)")}>SALDO EN CUENTA</Text>
+            <View style={{ paddingVertical: 3, paddingHorizontal: 9, borderRadius: 999, backgroundColor: "rgba(255,255,255,.14)", borderWidth: 1, borderColor: "rgba(255,255,255,.22)" }}>
+              <Text style={t(10.5, 800, C.text, { letterSpacing: 0.5 })}>✎ Editar</Text>
+            </View>
+          </View>
           <Text style={t(36, 800, C.text, { letterSpacing: -0.72, marginTop: 6, marginBottom: 4, fontVariant: ["tabular-nums"] })} adjustsFontSizeToFit numberOfLines={1}>
             {money(display)}
           </Text>
-          <Text style={t(12, 400, "rgba(255,255,255,.85)")}>Cuenta corriente •••• 4821 · Actualizado {clock(now)}</Text>
-        </View>
+          <Text style={t(12, 700, C.text)} numberOfLines={1}>
+            {cuenta.nombre}
+            {cuenta.numero ? <Text style={t(12, 400, "rgba(255,255,255,.85)")}> · N° {cuenta.numero}</Text> : <Text style={t(12, 400, C.cyan)}> · Toca para agregar el número</Text>}
+          </Text>
+          <Text style={t(11.5, 400, "rgba(255,255,255,.7)", { marginTop: 2 })}>Actualizado {clock(now)}</Text>
+        </Pressable>
       </View>
 
       <View style={{ flexDirection: "row", gap: 12, paddingHorizontal: 18, marginTop: -54 }}>

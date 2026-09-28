@@ -140,9 +140,10 @@ function cleanName(s: string) {
 
 // ---- Ciudad -----------------------------------------------------------------
 
+// The company works in Moquegua and Arequipa, so those win when a receipt mentions several cities.
 const CITIES = [
-  "Lima", "Arequipa", "Trujillo", "Cusco", "Piura", "Chiclayo", "Huancayo", "Iquitos", "Tacna", "Ica", "Puno", "Juliaca",
-  "Cajamarca", "Chimbote", "Huánuco", "Ayacucho", "Pucallpa", "Tarapoto", "Tumbes", "Moquegua", "Ilo", "Huaraz", "Sullana",
+  "Moquegua", "Arequipa", "Lima", "Trujillo", "Cusco", "Piura", "Chiclayo", "Huancayo", "Iquitos", "Tacna", "Ica", "Puno", "Juliaca",
+  "Cajamarca", "Chimbote", "Huánuco", "Ayacucho", "Pucallpa", "Tarapoto", "Tumbes", "Ilo", "Huaraz", "Sullana",
   "Callao", "Chincha", "Pisco", "Abancay", "Puerto Maldonado", "Moyobamba", "Jaén", "Talara", "Huacho", "Barranca",
   "Huancavelica", "Cerro de Pasco", "Chachapoyas", "Nazca", "Paita", "Lambayeque", "Cañete", "Huaral",
 ];

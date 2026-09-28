@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Image, KeyboardAvoidingView, Pressable, ScrollView, Text, View } from "react-native";
 import { C, t } from "../theme";
 import { AmountField, BottomBar, DateField, ErrorText, FieldLabel, Header, OptionGrid, PrimaryButton, Screen, TextField } from "../components/ui";
@@ -22,7 +21,7 @@ export function EgresoForm({ egr, set, err, balance, fromCapture, autoVals, thum
   // A field keeps its AUTO badge while it still holds the value read from the photo.
   const auto = (k: keyof Egreso) => fromCapture && autoVals[k] !== undefined && autoVals[k] !== "" && autoVals[k] === egr[k];
   const amt = num(egr.monto);
-  const [cityFocus, setCityFocus] = useState(false);
+  // Quick picks for the two cities where the company works; hidden once one is chosen.
   const citySuggestions = CIUDADES.filter((c) => c.toLowerCase().startsWith(egr.ciudad.trim().toLowerCase()) && c !== egr.ciudad);
 
   return (
@@ -58,15 +57,13 @@ export function EgresoForm({ egr, set, err, balance, fromCapture, autoVals, thum
               <TextField
                 value={egr.ciudad}
                 onChangeText={(v) => set("ciudad", v)}
-                placeholder="Ej. Lima"
-                onFocus={() => setCityFocus(true)}
-                onBlur={() => setCityFocus(false)}
+                placeholder="Ej. Moquegua"
                 style={{ paddingHorizontal: 12 }}
               />
               <ErrorText>{err.ciudad}</ErrorText>
             </View>
           </View>
-          {cityFocus && citySuggestions.length > 0 ? (
+          {citySuggestions.length > 0 ? (
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: -6 }}>
               {citySuggestions.map((c) => (
                 <Pressable
