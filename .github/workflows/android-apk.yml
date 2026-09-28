@@ -72,10 +72,18 @@ jobs:
           files: app/ICR-Finanzas-${{ github.run_number }}.apk
 
   smoke-test:
-    name: Probar que abre (emulador)
+    name: Probar que abre (Android ${{ matrix.name }})
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: "8", api: 26, target: google_apis }
+          - { name: "11", api: 30, target: google_apis }
+          - { name: "15 (16 KB)", api: 35, target: google_apis_ps16k }
+          - { name: "16", api: 36, target: google_apis }
     steps:
       - uses: actions/checkout@v4
 
@@ -89,12 +97,12 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Abrir la app en Android 14
+      - name: Abrir la app en el emulador
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: ${{ matrix.api }}
           arch: x86_64
-          target: google_apis
+          target: ${{ matrix.target }}
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: bash .github/scripts/smoke-test.sh ICR-Finanzas-${{ github.run_number }}.apk
