@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, Pressable, ScrollView, Text, View } from "react-native";
+import { Animated, Image, Pressable, ScrollView, Text, View } from "react-native";
 import { C, glass, kicker, t } from "../theme";
 import { LiveDot } from "../components/ui";
 import { clock, fdate, money, today } from "../lib/format";
@@ -36,12 +36,10 @@ export function Home({ display, cuenta, onCuenta, movs, hlId, filter, setFilter,
       <View style={{ paddingTop: 24 + topInset, paddingHorizontal: 18, paddingBottom: 70 }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: "rgba(255,255,255,.2)", alignItems: "center", justifyContent: "center" }}>
-              <Text style={t(14, 800)}>A</Text>
-            </View>
+            <Image source={require("../../assets/icon.png")} style={{ width: 34, height: 34, borderRadius: 10 }} accessibilityLabel="ICR" />
             <View>
-              <Text style={t(11.5, 400, "rgba(255,255,255,.85)")}>Hola,</Text>
-              <Text style={t(14, 700)}>Adrián Alessandro</Text>
+              <Text style={t(11.5, 400, "rgba(255,255,255,.85)")}>Bienvenido a</Text>
+              <Text style={t(14, 700)}>ICR Finanzas</Text>
             </View>
           </View>
           <View

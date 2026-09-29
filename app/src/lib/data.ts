@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { daysAgo, today } from "./format";
+import { today } from "./format";
 
 export const CATS = ["Equipos", "Caja chica", "Movilidad", "Material", "Sueldo", "Oficina", "Fletes", "Viáticos"] as const;
 export const TIPOS = ["Obra / Proyecto", "Venta", "Otro"] as const;
@@ -35,22 +35,16 @@ export const DEFAULT_CUENTA: Cuenta = { nombre: "Cuenta corriente", numero: "" }
 
 const KEY = "cajaobra.v1";
 
-const seed = (): Store => ({
-  balance: 48250,
-  cuenta: DEFAULT_CUENTA,
-  movs: [
-    { id: 1, kind: "in", title: "Torre Aurora — Etapa 2", cat: "Obra / Proyecto", date: daysAgo(1), amount: 12500 },
-    { id: 2, kind: "out", title: 'Fierro corrugado 1/2"', cat: "Material", date: daysAgo(2), amount: 3480, persona: "Aceros del Sur", ciudad: "Moquegua" },
-    { id: 3, kind: "out", title: "Planilla quincenal", cat: "Sueldo", date: daysAgo(4), amount: 6200, persona: "Personal de obra", ciudad: "Arequipa" },
-    { id: 4, kind: "in", title: "Venta de excedente de ladrillo", cat: "Venta", date: daysAgo(6), amount: 1850 },
-  ],
-});
+const seed = (): Store => ({ balance: 0, cuenta: DEFAULT_CUENTA, movs: [] });
+
+/** Movements that shipped as demo data in early builds (ids 1-4); dropped from phones that saved them. */
+const isDemoMov = (m: Mov) => m.id >= 1 && m.id <= 4;
 
 export async function loadStore(): Promise<Store> {
   try {
     const raw = await AsyncStorage.getItem(KEY);
     const s = raw ? JSON.parse(raw) : null;
-    if (s && typeof s.balance === "number" && Array.isArray(s.movs)) return { ...s, cuenta: s.cuenta ?? DEFAULT_CUENTA };
+    if (s && typeof s.balance === "number" && Array.isArray(s.movs)) return { ...s, cuenta: s.cuenta ?? DEFAULT_CUENTA, movs: s.movs.filter((m: Mov) => !isDemoMov(m)) };
   } catch {}
   return seed();
 }
