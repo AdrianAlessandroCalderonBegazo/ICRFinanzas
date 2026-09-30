@@ -128,3 +128,23 @@ test("rowsFromLines une columnas de la misma fila", () => {
   ]);
   assert.deepEqual(rows, ["GRIFO SANTA ROSA", "SUBTOTAL 182.63", "TOTAL: S/ 215.50"]);
 });
+
+test("gastos fijos: sueldos, alquiler y servicios", () => {
+  const sueldo = parseComprobante(lines("PAGO DE PLANILLA QUINCENAL\nTOTAL S/ 6,200.00"), NOW);
+  assert.equal(sueldo.categoria, "Gastos fijos");
+  assert.equal(sueldo.subcategoria, "Sueldos");
+
+  const luz = parseComprobante(lines("LUZ DEL SUR S.A.A.\nRecibo de luz setiembre\nTOTAL A PAGAR S/ 312.40"), NOW);
+  assert.equal(luz.categoria, "Gastos fijos");
+  assert.equal(luz.subcategoria, "Servicios");
+
+  const local = parseComprobante(lines("RECIBO DE ALQUILER DE LOCAL\nMes de septiembre\nTOTAL S/ 1,500.00"), NOW);
+  assert.equal(local.categoria, "Gastos fijos");
+  assert.equal(local.subcategoria, "Alquiler");
+});
+
+test("alquiler de maquinaria sigue siendo Equipos y no tiene subcategoría", () => {
+  const r = parseComprobante(lines("ALQUILER DE MEZCLADORA 3 DIAS\nTOTAL S/ 450.00"), NOW);
+  assert.equal(r.categoria, "Equipos");
+  assert.equal(r.subcategoria, "");
+});

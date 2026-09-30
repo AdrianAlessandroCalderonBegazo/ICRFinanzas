@@ -14,7 +14,7 @@ design/   Diseño original exportado de Claude Design (prototipo HTML + conversa
 - **Cuenta y saldo**: toca la tarjeta del saldo (✎ Editar) para cambiar el nombre de la cuenta, el número de cuenta y el saldo actual. Cambiar el saldo no crea un movimiento.
 - **Ingreso**: fecha, tipo (Obra / Proyecto, Venta, Otro), detalle opcional y monto. Muestra el nuevo saldo antes de confirmar.
 - **Egreso** — dos formas:
-  - **Manual**: fecha, ciudad (sugerencias: Moquegua y Arequipa), persona, descripción, categoría (Equipos, Caja chica, Movilidad, Material, Sueldo, Oficina, Fletes, Viáticos) y monto.
+  - **Manual**: fecha, ciudad (sugerencias: Moquegua y Arequipa), persona, descripción, categoría (Equipos, Caja chica, Movilidad, Material, Oficina, Fletes, Viáticos, Proveedores, Gastos fijos) y monto. Al elegir **Gastos fijos** se abre otro selector con **Sueldos, Alquiler o Servicios**.
   - **Con captura**: sube una foto (galería o cámara) de la boleta, factura, ticket o captura de Yape/Plin/transferencia. El texto se lee **en el teléfono** con Google ML Kit (OCR, sin internet ni costo) y el formulario se llena solo; los campos detectados llevan la marca **AUTO** y se pueden corregir.
 - Ambos formularios terminan en una **hoja de confirmación** con el resumen y el saldo resultante antes de registrar.
 - Los datos se guardan en el teléfono (AsyncStorage).
@@ -27,7 +27,7 @@ design/   Diseño original exportado de Claude Design (prototipo HTML + conversa
 | Fecha | `dd/mm/aaaa`, `aaaa-mm-dd`, `27 set. 2026`, `24 de septiembre de 2026`… (prioriza la línea "Fecha/Emisión") |
 | Persona | Destinatario en Yape/Plin/transferencias; razón social (S.A.C., E.I.R.L., …) en boletas y facturas |
 | Ciudad | Ciudades del Perú y distritos de Lima que aparezcan en la dirección |
-| Categoría | Palabras clave (cemento → Material, combustible → Movilidad, flete → Fletes, menú → Viáticos, …) |
+| Categoría | Palabras clave (cemento → Material, combustible → Movilidad, flete → Fletes, menú → Viáticos, …) ; planilla → Gastos fijos › Sueldos, recibo de luz/agua/internet → Gastos fijos › Servicios, alquiler de local → Gastos fijos › Alquiler. "Proveedores" y "Caja chica" se eligen a mano |
 | Descripción | Primera línea de producto relacionada con la categoría, o "Transferencia a …" |
 
 Las reglas están en `app/src/lib/parseComprobante.ts` y tienen pruebas en `parseComprobante.test.ts`.

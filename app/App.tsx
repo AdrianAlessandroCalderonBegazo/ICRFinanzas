@@ -8,7 +8,7 @@ import { useFonts, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, M
 
 import { APP_BACKGROUND, C } from "./src/theme";
 import { money, num, fdate } from "./src/lib/format";
-import { DEFAULT_CUENTA, emptyEgr, emptyIng, loadStore, saveStore, type Cuenta, type Egreso, type Ingreso, type Mov } from "./src/lib/data";
+import { catLabel, DEFAULT_CUENTA, emptyEgr, emptyIng, loadStore, saveStore, type Cuenta, type Egreso, type Ingreso, type Mov } from "./src/lib/data";
 import { leerComprobante } from "./src/lib/ocr";
 import { Home } from "./src/screens/Home";
 import { IngresoForm, type Errors } from "./src/screens/IngresoForm";
@@ -120,6 +120,7 @@ function CajaDeObra() {
     if (!egr.persona.trim()) e.persona = "Indica la persona";
     if (!egr.desc.trim()) e.desc = "Agrega una descripción";
     if (!egr.categoria) e.categoria = "Elige una categoría";
+    else if (egr.categoria === "Gastos fijos" && !egr.subcategoria) e.subcategoria = "Elige el tipo de gasto fijo";
     if (num(egr.monto) <= 0) e.monto = "Ingresa un monto mayor a 0";
     if (Object.keys(e).length) return setErr(e);
     setSheet("out");
@@ -136,7 +137,7 @@ function CajaDeObra() {
       mov = { id, kind, title: ing.detalle.trim() || ing.tipo, cat: ing.tipo, date: ing.fecha, amount: amt };
     } else {
       amt = num(egr.monto);
-      mov = { id, kind, title: egr.desc.trim(), cat: egr.categoria, date: egr.fecha, amount: amt, persona: egr.persona.trim(), ciudad: egr.ciudad.trim(), captura: fromCapture };
+      mov = { id, kind, title: egr.desc.trim(), cat: catLabel(egr.categoria, egr.subcategoria), date: egr.fecha, amount: amt, persona: egr.persona.trim(), ciudad: egr.ciudad.trim(), captura: fromCapture };
     }
     const from = balance;
     const to = +(from + (kind === "in" ? amt : -amt)).toFixed(2);
@@ -288,7 +289,7 @@ function CajaDeObra() {
         ["Persona", egr.persona],
         ["Descripción", egr.desc],
         ["Ciudad", egr.ciudad],
-        ["Categoría", egr.categoria],
+        ["Categoría", catLabel(egr.categoria, egr.subcategoria)],
         ["Origen", fromCapture ? "Captura de pantalla" : "Manual"],
       ],
       newBalance: money(balance - eAmt),

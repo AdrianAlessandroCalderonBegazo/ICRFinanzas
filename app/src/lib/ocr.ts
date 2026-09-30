@@ -15,12 +15,14 @@ export async function leerComprobante(uri: string): Promise<Egreso> {
   const byRows = parseComprobante(rowsFromLines(lines));
   const byBlocks = parseComprobante(lines.map((l) => l.text));
   const pick = <K extends keyof Egreso>(k: K) => byRows[k] || byBlocks[k];
+  const categoria = pick("categoria");
   return {
     fecha: byRows.fecha,
     persona: pick("persona"),
     desc: pick("desc"),
     ciudad: pick("ciudad"),
-    categoria: pick("categoria"),
+    categoria,
+    subcategoria: categoria === "Gastos fijos" ? pick("subcategoria") : "",
     monto: pick("monto"),
   };
 }

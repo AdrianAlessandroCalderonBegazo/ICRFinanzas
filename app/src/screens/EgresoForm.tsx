@@ -2,7 +2,7 @@ import { Image, KeyboardAvoidingView, Pressable, ScrollView, Text, View } from "
 import { C, t } from "../theme";
 import { AmountField, BottomBar, DateField, ErrorText, FieldLabel, Header, OptionGrid, PrimaryButton, Screen, TextField } from "../components/ui";
 import { cleanAmt, money, num } from "../lib/format";
-import { CATS, CIUDADES, type Egreso } from "../lib/data";
+import { CATS, CIUDADES, SUBCATS, type Egreso } from "../lib/data";
 import type { Errors } from "./IngresoForm";
 
 export function EgresoForm({ egr, set, err, balance, fromCapture, autoVals, thumbUri, onBack, onReview, topInset, bottomInset }: {
@@ -89,9 +89,26 @@ export function EgresoForm({ egr, set, err, balance, fromCapture, autoVals, thum
           </View>
           <View>
             <FieldLabel auto={auto("categoria")}>CATEGORÍA</FieldLabel>
-            <OptionGrid options={CATS} value={egr.categoria} onPick={(v) => set("categoria", v)} columns={4} height={42} fontSize={11.5} />
+            <OptionGrid
+              options={CATS}
+              value={egr.categoria}
+              onPick={(v) => {
+                set("categoria", v);
+                if (v !== "Gastos fijos") set("subcategoria", "");
+              }}
+              columns={3}
+              height={42}
+              fontSize={12}
+            />
             <ErrorText>{err.categoria}</ErrorText>
           </View>
+          {egr.categoria === "Gastos fijos" ? (
+            <View>
+              <FieldLabel auto={auto("subcategoria")}>TIPO DE GASTO FIJO</FieldLabel>
+              <OptionGrid options={SUBCATS["Gastos fijos"]} value={egr.subcategoria} onPick={(v) => set("subcategoria", v)} columns={3} height={42} fontSize={12} />
+              <ErrorText>{err.subcategoria}</ErrorText>
+            </View>
+          ) : null}
           <View>
             <FieldLabel auto={auto("monto")}>MONTO</FieldLabel>
             <AmountField value={egr.monto} onChangeText={(v) => set("monto", cleanAmt(v))} accent={C.blueSoft} />

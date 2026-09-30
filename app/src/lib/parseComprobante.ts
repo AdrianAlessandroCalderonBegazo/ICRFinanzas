@@ -3,7 +3,7 @@
  * Yape/Plin or bank transfer screenshot) into egreso form fields.
  * Pure functions: no React Native imports, so it can be tested with plain Node.
  */
-import type { Categoria, Egreso } from "./data";
+import type { Categoria, Egreso, Subcategoria } from "./data";
 import { isoDate, pad } from "./format";
 
 const strip = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -165,22 +165,34 @@ export function findCiudad(text: string): string {
 
 // ---- Categoría y descripción ------------------------------------------------
 
-const KEYWORDS: Record<Exclude<Categoria, "Caja chica">, string[]> = {
+type Keyworded = Exclude<Categoria, "Caja chica" | "Proveedores" | "Gastos fijos">;
+
+const KEYWORDS: Record<Keyworded, string[]> = {
   Movilidad: ["combustible", "gasolina", "gasohol", "diesel", "petroleo", "grifo", "servicentro", "glp", "gnv", "taxi", "uber", "cabify", "didi", "indriver", "peaje", "pasaje", "estacionamiento", "primax", "repsol", "petroperu", "pecsa"],
   Material: ["cemento", "fierro", "acero", "ladrillo", "arena", "piedra", "agregado", "madera", "triplay", "pintura", "tubo", "pvc", "cable", "clavo", "alambre", "yeso", "mayolica", "ceramico", "ferreteria", "sodimac", "promart", "maestro", "calamina", "varilla", "concreto", "sika", "bolsa"],
   Equipos: ["alquiler", "mezcladora", "andamio", "compactadora", "vibradora", "taladro", "amoladora", "herramienta", "maquinaria", "equipo", "retroexcavadora", "generador", "martillo", "carretilla"],
   Fletes: ["flete", "carga", "traslado", "mudanza", "transportes", "transporte", "remision", "courier", "olva", "shalom", "encomienda"],
   Viáticos: ["restaurant", "restaurante", "menu", "almuerzo", "cena", "desayuno", "hotel", "hostal", "hospedaje", "polleria", "chifa", "cevicheria", "cafe", "alimentacion", "comida", "bebida", "gaseosa"],
-  Oficina: ["papel", "utiles", "toner", "impresion", "fotocopia", "copias", "internet", "telefono", "claro", "movistar", "entel", "bitel", "libreria", "tinta", "oficina", "sedapal", "enel", "luz del sur", "archivador"],
-  Sueldo: ["planilla", "sueldo", "remuneracion", "jornal", "honorarios", "adelanto", "gratificacion", "cts", "pago de personal"],
+  Oficina: ["papel", "utiles", "toner", "impresion", "fotocopia", "copias", "libreria", "tinta", "oficina", "archivador"],
 };
+
+/** Recurring costs: each subcategory has its own keywords. Proveedores and Caja chica are chosen by hand. */
+const FIXED_KEYWORDS: Record<Subcategoria, string[]> = {
+  Sueldos: ["planilla", "sueldo", "sueldos", "remuneracion", "jornal", "honorarios", "adelanto", "gratificacion", "cts", "pago de personal"],
+  Alquiler: ["alquiler de local", "alquiler de oficina", "alquiler de terreno", "alquiler de almacen", "alquiler de deposito", "alquiler de departamento", "alquiler de casa", "alquiler mensual", "arrendamiento", "renta mensual"],
+  Servicios: ["luz", "agua", "electricidad", "internet", "telefono", "telefonia", "sedapal", "seal", "enel", "luz del sur", "claro", "movistar", "entel", "bitel", "gas natural", "cable", "arbitrios", "servicio de agua", "servicio de luz"],
+};
+
+const hits = (t: string, words: string[]) => words.reduce((n, w) => n + (t.includes(` ${w} `) || t.includes(` ${w}s `) ? 1 : 0), 0);
 
 export function findCategoria(text: string): Categoria | "" {
   const t = words(text);
-  let best: Categoria | "" = "";
-  let bestScore = 0;
-  for (const [cat, words] of Object.entries(KEYWORDS)) {
-    const score = words.reduce((n, w) => n + (t.includes(` ${w} `) || t.includes(` ${w}s `) ? 1 : 0), 0);
+  // Fixed costs are checked first so they win ties (e.g. "alquiler de local" also matches Equipos' "alquiler").
+  const fixed = Object.values(FIXED_KEYWORDS).reduce((n, w) => n + hits(t, w), 0);
+  let best: Categoria | "" = fixed > 0 ? "Gastos fijos" : "";
+  let bestScore = fixed;
+  for (const [cat, w] of Object.entries(KEYWORDS)) {
+    const score = hits(t, w);
     if (score > bestScore) {
       best = cat as Categoria;
       bestScore = score;
@@ -189,8 +201,22 @@ export function findCategoria(text: string): Categoria | "" {
   return best;
 }
 
+export function findSubcategoria(text: string): Subcategoria | "" {
+  const t = words(text);
+  let best: Subcategoria | "" = "";
+  let bestScore = 0;
+  for (const [sub, w] of Object.entries(FIXED_KEYWORDS)) {
+    const score = hits(t, w);
+    if (score > bestScore) {
+      best = sub as Subcategoria;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
 export function findDescripcion(lines: string[], categoria: Categoria | "", persona: string, isTransfer: boolean): string {
-  const keys = categoria && categoria !== "Caja chica" ? KEYWORDS[categoria] : [];
+  const keys = categoria === "Gastos fijos" ? Object.values(FIXED_KEYWORDS).flat() : categoria in KEYWORDS ? KEYWORDS[categoria as Keyworded] : [];
   // First product-like line that mentions a keyword of the detected category (skipping the issuer's name).
   const item = lines.find((line) => {
     const l = words(line);
@@ -219,12 +245,14 @@ export function parseComprobante(lines: string[], now = new Date()): Egreso {
   const monto = findMonto(clean);
   const persona = findPersona(clean);
   const categoria = findCategoria(text);
+  const subcategoria = categoria === "Gastos fijos" ? findSubcategoria(text) : "";
   return {
     fecha: findFecha(clean, now),
     persona,
     desc: findDescripcion(clean, categoria, persona, isTransfer),
     ciudad: findCiudad(text),
     categoria,
+    subcategoria,
     monto: monto > 0 ? monto.toFixed(2) : "",
   };
 }
