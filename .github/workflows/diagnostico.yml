@@ -1,0 +1,70 @@
+name: Diagnóstico de arranque
+
+# Construye la versión actual, la abre en emuladores Android y reporta cualquier crash.
+# No forma parte del build normal: corre a mano (Run workflow) o al cambiar .github/diagnostico/.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/diagnostico/**"
+      - ".github/workflows/diagnostico.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - run: npx expo prebuild --platform android --no-install
+      - name: Compilar APK (x86_64, para el emulador)
+        working-directory: app/android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: diag-apk
+          path: app/android/app/build/outputs/apk/release/app-release.apk
+
+  abrir:
+    name: Abrir en Android ${{ matrix.name }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: "11", api: 30 }
+          - { name: "15", api: 35 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: diag-apk
+      - name: Habilitar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: python3 .github/diagnostico/tour.py app-release.apk
