@@ -47,8 +47,9 @@ jobs:
 
       - name: Compilar APK
         working-directory: app/android
-        # Only real-phone ABIs keeps the APK small; the release build is signed with the debug key.
-        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=armeabi-v7a,arm64-v8a
+        # All four ABIs: an ARM-only APK crashes on open ("couldn't find DSO libreactnative.so") on
+        # x86 emulators such as Android Studio's. The release build is signed with the debug key.
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64
 
       - name: Renombrar APK
         run: mv android/app/build/outputs/apk/release/app-release.apk "ICR-Finanzas-${{ github.run_number }}.apk"

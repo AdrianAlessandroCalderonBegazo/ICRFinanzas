@@ -1,14 +1,9 @@
 name: Diagnóstico de arranque
 
 # Construye la versión actual, la abre en emuladores Android y reporta cualquier crash.
-# No forma parte del build normal: corre a mano (Run workflow) o al cambiar .github/diagnostico/.
+# No forma parte del build normal: solo corre a mano (Actions → Diagnóstico de arranque → Run workflow).
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - ".github/diagnostico/**"
-      - ".github/workflows/diagnostico.yml"
 
 jobs:
   build:
