@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { BackHandler, View } from "react-native";
+import { Component, useCallback, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from "react";
+import { BackHandler, ScrollView, Text, Pressable, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { useFonts, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold } from "@expo-google-fonts/manrope";
 
-import { C } from "./src/theme";
+import { C, t } from "./src/theme";
 import { money, num, fdate } from "./src/lib/format";
 import { catLabel, DEFAULT_CUENTA, emptyEgr, emptyIng, loadStore, saveStore, type Cuenta, type Egreso, type Ingreso, type Mov } from "./src/lib/data";
 import { leerComprobante } from "./src/lib/ocr";
@@ -31,7 +31,11 @@ export default function App() {
     <SafeAreaProvider>
       <View style={{ flex: 1, backgroundColor: C.bg }}>
         <StatusBar style="light" />
-        {fontsLoaded ? <CajaDeObra /> : null}
+        {fontsLoaded ? (
+          <ErrorBoundary>
+            <CajaDeObra />
+          </ErrorBoundary>
+        ) : null}
       </View>
     </SafeAreaProvider>
   );
@@ -43,7 +47,7 @@ function CajaDeObra() {
   const [screen, setScreen] = useState<ScreenName>("home");
   const [balance, setBalance] = useState(0);
   const [cuenta, setCuenta] = useState<Cuenta>(DEFAULT_CUENTA);
-  const [display, setDisplay] = useState(0);
+  const [animFrom, setAnimFrom] = useState<number | null>(null); // previous balance, for the count-up on Home
   const [movs, setMovs] = useState<Mov[]>([]);
   const [ing, setIng] = useState<Ingreso>(emptyIng);
   const [egr, setEgr] = useState<Egreso>(emptyEgr);
@@ -57,7 +61,6 @@ function CajaDeObra() {
   const [hlId, setHlId] = useState<number | null>(null);
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const raf = useRef(0);
   const job = useRef<AbortController | null>(null);
 
   const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
@@ -66,29 +69,14 @@ function CajaDeObra() {
     loadStore().then((s) => {
       setBalance(s.balance);
       setCuenta(s.cuenta);
-      setDisplay(s.balance);
       setMovs(s.movs);
       setReady(true);
     });
     return () => {
       timers.current.forEach(clearTimeout);
-      cancelAnimationFrame(raf.current);
       job.current?.abort();
     };
   }, []);
-
-  /** Animates the live balance from one value to another (ease-out cubic, 1.1 s). */
-  const tween = (from: number, to: number) => {
-    cancelAnimationFrame(raf.current);
-    const t0 = performance.now();
-    const step = (now: number) => {
-      const p = Math.min(1, (now - t0) / 1100);
-      const e = 1 - Math.pow(1 - p, 3);
-      setDisplay(from + (to - from) * e);
-      if (p < 1) raf.current = requestAnimationFrame(step);
-    };
-    raf.current = requestAnimationFrame(step);
-  };
 
   const go = (s: ScreenName) => {
     setScreen(s);
@@ -147,7 +135,7 @@ function CajaDeObra() {
     setScreen("home");
     setSheet(null);
     setBalance(to);
-    setDisplay(from);
+    setAnimFrom(from);
     setMovs(nextMovs);
     setHlId(id);
     setFilter("Todos");
@@ -158,9 +146,9 @@ function CajaDeObra() {
     setAutoVals({});
     setCap(IDLE_CAP);
     setSuccess({ title: kind === "in" ? "Ingreso registrado" : "Egreso registrado", sub: `${kind === "in" ? "+" : "−"}${money(amt)} · saldo actualizado` });
-    later(() => tween(from, to), 250);
     later(() => setSuccess(null), 2600);
     later(() => setHlId(null), 3000);
+    later(() => setAnimFrom(null), 3000);
   };
 
   /** Saves the account data; a new balance replaces the old one (no movement is recorded). */
@@ -169,11 +157,11 @@ function CajaDeObra() {
     saveStore({ balance: nextBalance, cuenta: next, movs });
     setCuenta(next);
     setBalance(nextBalance);
-    setDisplay(from);
+    setAnimFrom(from);
     go("home");
     setSuccess({ title: "Cuenta actualizada", sub: `${next.nombre} · saldo ${money(nextBalance)}` });
-    if (nextBalance !== from) later(() => tween(from, nextBalance), 250);
     later(() => setSuccess(null), 2600);
+    later(() => setAnimFrom(null), 3000);
   };
 
   // ---- Captura -------------------------------------------------------------
@@ -303,7 +291,8 @@ function CajaDeObra() {
     <View style={{ flex: 1 }}>
       {screen === "home" && (
         <Home
-          display={display}
+          balance={balance}
+          animFrom={animFrom}
           cuenta={cuenta}
           onCuenta={() => go("cuenta")}
           movs={movs}
@@ -357,4 +346,35 @@ function CajaDeObra() {
       {success && <SuccessToast title={success.title} sub={success.sub} topInset={insets.top} />}
     </View>
   );
+}
+
+/**
+ * If a screen throws while rendering, show what happened (and let the user retry) instead of the
+ * app silently closing. The message is what we need to fix the problem.
+ */
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("ICR Finanzas crash:", error, info.componentStack);
+  }
+  render() {
+    const { error } = this.state;
+    if (!error) return this.props.children;
+    return (
+      <View style={{ flex: 1, backgroundColor: C.bg, padding: 24, paddingTop: 64 }}>
+        <Text style={t(24, 800)}>Algo salió mal</Text>
+        <Text style={t(13, 600, C.muted, { marginTop: 8 })}>Toma una captura de esta pantalla y envíala para corregirlo.</Text>
+        <ScrollView style={{ flex: 1, marginVertical: 16, backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.line }} contentContainerStyle={{ padding: 14 }}>
+          <Text style={t(12, 700, C.red)}>{String(error.message)}</Text>
+          <Text style={t(10.5, 400, C.muted, { marginTop: 8 })}>{String(error.stack ?? "").slice(0, 1500)}</Text>
+        </ScrollView>
+        <Pressable onPress={() => this.setState({ error: null })} style={{ height: 54, borderRadius: 14, backgroundColor: C.teal, alignItems: "center", justifyContent: "center" }}>
+          <Text style={t(14, 800, C.white)}>REINTENTAR</Text>
+        </Pressable>
+      </View>
+    );
+  }
 }

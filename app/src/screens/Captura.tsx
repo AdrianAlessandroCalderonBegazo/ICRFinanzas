@@ -110,7 +110,6 @@ function ScanLine() {
           right: 0,
           height: 3,
           backgroundColor: C.mint,
-          boxShadow: "0px 0px 16px 4px rgba(125,255,214,0.6)",
           transform: [{ translateY: y }],
         }}
       />

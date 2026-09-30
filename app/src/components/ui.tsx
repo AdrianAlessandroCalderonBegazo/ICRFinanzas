@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Animated, Easing, Pressable, Text, TextInput, View, type TextInputProps, type ViewStyle } from "react-native";
+import { Animated, Easing, Pressable, Text, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from "react-native";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { LinearGradient } from "expo-linear-gradient";
 import { C, TEAL_GRADIENT, card, inputBox, kicker, primaryButton, secondaryButton, t } from "../theme";
 import { inputDate, isoDate, parseIso } from "../lib/format";
 
@@ -24,13 +25,9 @@ export function Header({ kicker: k, title, sub, onBack, topInset, tone = "ink" }
 }) {
   const teal = tone === "teal";
   const soft = teal ? 0.85 : 0.75;
+  const Wrap = teal ? TealGradient : View;
   return (
-    <View
-      style={[
-        { paddingTop: 20 + topInset, paddingHorizontal: 22, paddingBottom: 22 },
-        teal ? { experimental_backgroundImage: TEAL_GRADIENT, backgroundColor: C.teal } : { backgroundColor: C.ink },
-      ]}
-    >
+    <Wrap style={[{ paddingTop: 20 + topInset, paddingHorizontal: 22, paddingBottom: 22 }, !teal && { backgroundColor: C.ink }]}>
       <Pressable
         onPress={onBack}
         accessibilityLabel="Volver"
@@ -42,7 +39,16 @@ export function Header({ kicker: k, title, sub, onBack, topInset, tone = "ink" }
       <Text style={kicker(`rgba(255,255,255,${teal ? 0.9 : 0.75})`, 10.5)}>{k}</Text>
       <Text style={t(24, 800, C.white, { marginTop: 4 })}>{title}</Text>
       <Text style={t(12, 400, `rgba(255,255,255,${soft})`, { marginTop: 4 })}>{sub}</Text>
-    </View>
+    </Wrap>
+  );
+}
+
+/** Teal gradient container for the home and ingreso headers. */
+export function TealGradient({ style, children }: { style?: StyleProp<ViewStyle>; children?: ReactNode }) {
+  return (
+    <LinearGradient colors={TEAL_GRADIENT.colors} start={TEAL_GRADIENT.start} end={TEAL_GRADIENT.end} style={style}>
+      {children}
+    </LinearGradient>
   );
 }
 
@@ -67,7 +73,7 @@ export function ErrorText({ children }: { children?: string | null }) {
   return <Text style={t(11.5, 400, C.red, { marginTop: 6 })}>{children}</Text>;
 }
 
-const focusRing: ViewStyle = { borderColor: C.teal, boxShadow: "0px 0px 0px 3px rgba(14,116,144,0.15)" };
+const focusRing: ViewStyle = { borderColor: C.teal };
 
 export function TextField(props: TextInputProps) {
   const [focus, setFocus] = useState(false);
@@ -157,7 +163,7 @@ export function OptionGrid<T extends string>({ options, value, onPick, columns, 
                 borderColor: active ? C.teal : C.border,
               }}
             >
-              <Text numberOfLines={1} adjustsFontSizeToFit style={t(fontSize, 700, active ? C.white : C.ink)}>
+              <Text numberOfLines={1} style={t(fontSize, 700, active ? C.white : C.ink)}>
                 {o}
               </Text>
             </Pressable>

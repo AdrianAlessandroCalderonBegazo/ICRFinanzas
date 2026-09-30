@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Animated, Image, Pressable, ScrollView, Text, View } from "react-native";
-import { C, TEAL_GRADIENT, card, kicker, raisedCard, t } from "../theme";
-import { Chip, LiveDot } from "../components/ui";
+import { C, card, kicker, raisedCard, t } from "../theme";
+import { Chip, LiveDot, TealGradient } from "../components/ui";
 import { clock, fdate, money, today } from "../lib/format";
 import type { Cuenta, Mov } from "../lib/data";
 
 type Filter = "Todos" | "Ingresos" | "Egresos";
 
-export function Home({ display, cuenta, onCuenta, movs, hlId, filter, setFilter, onIngreso, onEgreso, topInset, bottomInset }: {
-  display: number;
+export function Home({ balance, animFrom, cuenta, onCuenta, movs, hlId, filter, setFilter, onIngreso, onEgreso, topInset, bottomInset }: {
+  balance: number;
+  /** Previous balance: when set, the figure counts from it to `balance` on arrival. */
+  animFrom: number | null;
   cuenta: Cuenta;
   onCuenta: () => void;
   movs: Mov[];
@@ -20,12 +22,6 @@ export function Home({ display, cuenta, onCuenta, movs, hlId, filter, setFilter,
   topInset: number;
   bottomInset: number;
 }) {
-  const [now, setNow] = useState(new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
   const ym = today().slice(0, 7);
   const monthIn = movs.filter((m) => m.kind === "in" && m.date.slice(0, 7) === ym).reduce((a, m) => a + m.amount, 0);
   const monthOut = movs.filter((m) => m.kind === "out" && m.date.slice(0, 7) === ym).reduce((a, m) => a + m.amount, 0);
@@ -33,7 +29,7 @@ export function Home({ display, cuenta, onCuenta, movs, hlId, filter, setFilter,
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 28 + bottomInset }} showsVerticalScrollIndicator={false}>
-      <View style={{ paddingTop: 24 + topInset, paddingHorizontal: 22, paddingBottom: 78, backgroundColor: C.teal, experimental_backgroundImage: TEAL_GRADIENT }}>
+      <TealGradient style={{ paddingTop: 24 + topInset, paddingHorizontal: 22, paddingBottom: 78 }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Image source={require("../../assets/icon.png")} style={{ width: 34, height: 34, borderRadius: 10 }} accessibilityLabel="ICR" />
@@ -55,9 +51,7 @@ export function Home({ display, cuenta, onCuenta, movs, hlId, filter, setFilter,
               <Text style={t(10.5, 800, C.white, { letterSpacing: 0.5 })}>✎ Editar</Text>
             </View>
           </View>
-          <Text style={t(36, 800, C.white, { letterSpacing: -0.72, marginTop: 6, marginBottom: 4, fontVariant: ["tabular-nums"] })} adjustsFontSizeToFit numberOfLines={1}>
-            {money(display)}
-          </Text>
+          <Balance value={balance} from={animFrom} />
           <Text style={t(12, 700, C.white)} numberOfLines={1}>
             {cuenta.nombre}
             {cuenta.numero ? (
@@ -66,9 +60,9 @@ export function Home({ display, cuenta, onCuenta, movs, hlId, filter, setFilter,
               <Text style={t(12, 400, C.mint)}> · Toca para agregar el número</Text>
             )}
           </Text>
-          <Text style={t(11.5, 400, "rgba(255,255,255,.8)", { marginTop: 2 })}>Actualizado {clock(now)}</Text>
+          <Clock />
         </Pressable>
-      </View>
+      </TealGradient>
 
       <View style={{ flexDirection: "row", gap: 12, paddingHorizontal: 18, marginTop: -54 }}>
         <ActionCard sign="+" iconBg={C.teal} title="INGRESO" sub="Obra, venta u otro" onPress={onIngreso} />
@@ -78,11 +72,11 @@ export function Home({ display, cuenta, onCuenta, movs, hlId, filter, setFilter,
       <View style={{ flexDirection: "row", gap: 12, paddingTop: 14, paddingHorizontal: 18 }}>
         <View style={{ flex: 1, backgroundColor: C.tint, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14 }}>
           <Text style={kicker(C.teal)}>INGRESOS · MES</Text>
-          <Text style={t(15, 800, C.teal, { marginTop: 4 })} adjustsFontSizeToFit numberOfLines={1}>{money(monthIn)}</Text>
+          <Text style={t(15, 800, C.teal, { marginTop: 4 })} numberOfLines={1}>{money(monthIn)}</Text>
         </View>
         <View style={[card(14), { flex: 1, paddingVertical: 12, paddingHorizontal: 14 }]}>
           <Text style={kicker()}>EGRESOS · MES</Text>
-          <Text style={t(15, 800, C.red, { marginTop: 4 })} adjustsFontSizeToFit numberOfLines={1}>{money(monthOut)}</Text>
+          <Text style={t(15, 800, C.red, { marginTop: 4 })} numberOfLines={1}>{money(monthOut)}</Text>
         </View>
       </View>
 
@@ -154,4 +148,45 @@ function MovRow({ m, first, flash }: { m: Mov; first: boolean; flash: boolean })
       </Text>
     </Animated.View>
   );
+}
+
+/** The balance figure; counts from `from` to `value` (ease-out, 1.1 s) without re-rendering the rest of the screen. */
+function Balance({ value, from }: { value: number; from: number | null }) {
+  const animate = from !== null && from !== value;
+  const [shown, setShown] = useState(animate ? from : value);
+  useEffect(() => {
+    if (!animate || from === null) {
+      setShown(value);
+      return;
+    }
+    let raf = 0;
+    const start = setTimeout(() => {
+      const t0 = Date.now();
+      const step = () => {
+        const p = Math.min(1, (Date.now() - t0) / 1100);
+        setShown(from + (value - from) * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    }, 250);
+    return () => {
+      clearTimeout(start);
+      cancelAnimationFrame(raf);
+    };
+  }, [value, from, animate]);
+  return (
+    <Text style={t(36, 800, C.white, { letterSpacing: -0.72, marginTop: 6, marginBottom: 4, fontVariant: ["tabular-nums"] })} numberOfLines={1}>
+      {money(shown)}
+    </Text>
+  );
+}
+
+/** "Actualizado hh:mm:ss", ticking every second on its own. */
+function Clock() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return <Text style={t(11.5, 400, "rgba(255,255,255,.8)", { marginTop: 2 })}>Actualizado {clock(now)}</Text>;
 }

@@ -25,8 +25,8 @@ export const C = {
   outIcon: "#E4ECF5",
 };
 
-/** Teal gradient used by the home and ingreso headers. */
-export const TEAL_GRADIENT = "linear-gradient(160deg, #0E7490 0%, #12A3B8 100%)";
+/** Teal gradient (home and ingreso headers), drawn with expo-linear-gradient. */
+export const TEAL_GRADIENT = { colors: ["#0E7490", "#12A3B8"] as const, start: { x: 0, y: 0 }, end: { x: 1, y: 1 } };
 
 type Weight = 400 | 500 | 600 | 700 | 800;
 const FAMILY: Record<Weight, string> = {
@@ -61,7 +61,8 @@ export const card = (radius = 16): ViewStyle => ({
 export const raisedCard = (radius = 18): ViewStyle => ({
   backgroundColor: C.card,
   borderRadius: radius,
-  boxShadow: "0px 6px 20px rgba(13,34,51,0.10)",
+  elevation: 4,
+  shadowColor: "#0D2233",
 });
 
 export const inputBox: ViewStyle = {

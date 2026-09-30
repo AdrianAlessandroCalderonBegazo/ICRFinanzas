@@ -94,7 +94,7 @@ export function SuccessToast({ title, sub, topInset }: { title: string; sub: str
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-        boxShadow: "0px 10px 30px rgba(13,34,51,0.3)",
+        elevation: 8,
         opacity: a,
         transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
       }}

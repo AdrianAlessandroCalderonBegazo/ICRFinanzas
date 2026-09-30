@@ -1,4 +1,3 @@
-import { recognizeText } from "@infinitered/react-native-mlkit-text-recognition";
 import type { Egreso } from "./data";
 import { parseComprobante, rowsFromLines } from "./parseComprobante";
 
@@ -7,6 +6,8 @@ import { parseComprobante, rowsFromLines } from "./parseComprobante";
  * and turns the text into egreso fields.
  */
 export async function leerComprobante(uri: string): Promise<Egreso> {
+  // Loaded on demand so a problem with the native OCR module can never stop the app from opening.
+  const { recognizeText } = require("@infinitered/react-native-mlkit-text-recognition") as typeof import("@infinitered/react-native-mlkit-text-recognition");
   const result = await recognizeText(uri);
   const lines = result.blocks.flatMap((b) => b.lines);
   if (!lines.length) throw new Error("No se detectó texto. Intenta con una foto más nítida y bien iluminada.");
