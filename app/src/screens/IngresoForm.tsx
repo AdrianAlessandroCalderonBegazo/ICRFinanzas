@@ -21,7 +21,7 @@ export function IngresoForm({ ing, set, err, balance, onBack, onReview, topInset
   return (
     <Screen>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="height">
-        <Header kicker="NUEVO REGISTRO" title="Registrar ingreso" sub={`Saldo actual ${money(balance)}`} onBack={onBack} topInset={topInset} />
+        <Header kicker="NUEVO REGISTRO" title="Registrar ingreso" sub={`Saldo actual ${money(balance)}`} onBack={onBack} topInset={topInset} tone="teal" />
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 20, paddingHorizontal: 20, paddingBottom: 24, gap: 18 }} keyboardShouldPersistTaps="handled">
           <View>
             <FieldLabel>FECHA</FieldLabel>
@@ -39,9 +39,9 @@ export function IngresoForm({ ing, set, err, balance, onBack, onReview, topInset
           </View>
           <View>
             <FieldLabel>MONTO</FieldLabel>
-            <AmountField value={ing.monto} onChangeText={(v) => set("monto", cleanAmt(v))} accent={C.cyan} />
+            <AmountField value={ing.monto} onChangeText={(v) => set("monto", cleanAmt(v))} accent={C.teal} />
             <ErrorText>{err.monto}</ErrorText>
-            {amt > 0 ? <Text style={t(12, 700, C.cyan, { marginTop: 8 })}>Nuevo saldo: {money(balance + amt)}</Text> : null}
+            {amt > 0 ? <Text style={t(12, 700, C.teal, { marginTop: 8 })}>Nuevo saldo: {money(balance + amt)}</Text> : null}
           </View>
         </ScrollView>
         <BottomBar bottomInset={bottomInset}>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Animated, Easing, Pressable, Text, TextInput, View, type TextInputProps, type ViewStyle } from "react-native";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
-import { C, glass, inputBox, kicker, primaryButton, secondaryButton, t } from "../theme";
+import { C, TEAL_GRADIENT, card, inputBox, kicker, primaryButton, secondaryButton, t } from "../theme";
 import { inputDate, isoDate, parseIso } from "../lib/format";
 
 /** Full-screen container that fades in on mount (design: `animation: fadeIn .2s`). */
@@ -13,29 +13,35 @@ export function Screen({ children }: { children: ReactNode }) {
   return <Animated.View style={{ flex: 1, opacity: o }}>{children}</Animated.View>;
 }
 
-export function Header({ kicker: k, title, sub, onBack, topInset }: { kicker: string; title: string; sub: string; onBack: () => void; topInset: number }) {
+/** Teal gradient (ingreso) or solid ink (egreso and settings), as in the design. */
+export function Header({ kicker: k, title, sub, onBack, topInset, tone = "ink" }: {
+  kicker: string;
+  title: string;
+  sub: string;
+  onBack: () => void;
+  topInset: number;
+  tone?: "teal" | "ink";
+}) {
+  const teal = tone === "teal";
+  const soft = teal ? 0.85 : 0.75;
   return (
     <View
-      style={{
-        backgroundColor: "rgba(255,255,255,.07)",
-        borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,.14)",
-        paddingTop: 20 + topInset,
-        paddingHorizontal: 22,
-        paddingBottom: 22,
-      }}
+      style={[
+        { paddingTop: 20 + topInset, paddingHorizontal: 22, paddingBottom: 22 },
+        teal ? { experimental_backgroundImage: TEAL_GRADIENT, backgroundColor: C.teal } : { backgroundColor: C.ink },
+      ]}
     >
       <Pressable
         onPress={onBack}
         accessibilityLabel="Volver"
         hitSlop={8}
-        style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,.14)", alignItems: "center", justifyContent: "center", marginBottom: 14 }}
+        style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: teal ? "rgba(255,255,255,.2)" : "rgba(255,255,255,.14)", alignItems: "center", justifyContent: "center", marginBottom: 14 }}
       >
-        <Text style={t(22, 600, C.text, { marginTop: -3 })}>‹</Text>
+        <Text style={t(22, 600, C.white, { marginTop: -3 })}>‹</Text>
       </Pressable>
-      <Text style={kicker("rgba(255,255,255,.75)")}>{k}</Text>
-      <Text style={t(24, 800, C.text, { marginTop: 4 })}>{title}</Text>
-      <Text style={t(12, 400, "rgba(255,255,255,.75)", { marginTop: 4 })}>{sub}</Text>
+      <Text style={kicker(`rgba(255,255,255,${teal ? 0.9 : 0.75})`, 10.5)}>{k}</Text>
+      <Text style={t(24, 800, C.white, { marginTop: 4 })}>{title}</Text>
+      <Text style={t(12, 400, `rgba(255,255,255,${soft})`, { marginTop: 4 })}>{sub}</Text>
     </View>
   );
 }
@@ -48,8 +54,8 @@ export function FieldLabel({ children, auto, optional }: { children: string; aut
         {optional ? <Text style={t(10.5, 600, C.muted)}> (opcional)</Text> : null}
       </Text>
       {auto ? (
-        <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, backgroundColor: "rgba(18,163,184,.24)" }}>
-          <Text style={t(9, 800, C.cyan, { letterSpacing: 0.9 })}>AUTO</Text>
+        <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, backgroundColor: C.tint }}>
+          <Text style={t(9, 800, C.teal, { letterSpacing: 0.9 })}>AUTO</Text>
         </View>
       ) : null}
     </View>
@@ -61,13 +67,15 @@ export function ErrorText({ children }: { children?: string | null }) {
   return <Text style={t(11.5, 400, C.red, { marginTop: 6 })}>{children}</Text>;
 }
 
+const focusRing: ViewStyle = { borderColor: C.teal, boxShadow: "0px 0px 0px 3px rgba(14,116,144,0.15)" };
+
 export function TextField(props: TextInputProps) {
   const [focus, setFocus] = useState(false);
   return (
     <TextInput
       placeholderTextColor={C.placeholder}
-      selectionColor={C.cyan}
-      cursorColor={C.cyan}
+      selectionColor={C.teal}
+      cursorColor={C.teal}
       {...props}
       onFocus={(e) => {
         setFocus(true);
@@ -82,8 +90,6 @@ export function TextField(props: TextInputProps) {
   );
 }
 
-const focusRing: ViewStyle = { borderColor: "rgba(127,227,238,.8)", boxShadow: "0px 0px 0px 3px rgba(127,227,238,0.18)" };
-
 export function DateField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const open = () =>
     DateTimePickerAndroid.open({
@@ -95,22 +101,16 @@ export function DateField({ value, onChange }: { value: string; onChange: (v: st
     });
   return (
     <Pressable onPress={open} style={[inputBox, { flexDirection: "row", alignItems: "center", paddingHorizontal: 12 }]}>
-      <Text style={t(13.5, 600, value ? C.text : C.placeholder, { flex: 1 })}>{value ? inputDate(value) : "dd/mm/aaaa"}</Text>
-      <CalendarIcon />
+      <Text style={t(13.5, 600, value ? C.ink : C.placeholder, { flex: 1 })}>{value ? inputDate(value) : "dd/mm/aaaa"}</Text>
+      <View style={{ width: 16, height: 16, borderRadius: 3, borderWidth: 1.5, borderColor: C.muted, borderTopWidth: 4 }} />
     </Pressable>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <View style={{ width: 16, height: 16, borderRadius: 3, borderWidth: 1.5, borderColor: "rgba(255,255,255,.7)", borderTopWidth: 4 }} />
   );
 }
 
 export function AmountField({ value, onChangeText, accent }: { value: string; onChangeText: (v: string) => void; accent: string }) {
   const [focus, setFocus] = useState(false);
   return (
-    <View style={[glass(0.09, 0.22, 14), { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6, paddingHorizontal: 16 }, focus && focusRing]}>
+    <View style={[card(14), { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6, paddingHorizontal: 16, borderColor: C.border }, focus && focusRing]}>
       <Text style={t(22, 800, accent)}>S/</Text>
       <TextInput
         keyboardType="decimal-pad"
@@ -118,8 +118,8 @@ export function AmountField({ value, onChangeText, accent }: { value: string; on
         onChangeText={onChangeText}
         placeholder="0.00"
         placeholderTextColor={C.placeholder}
-        selectionColor={C.cyan}
-        cursorColor={C.cyan}
+        selectionColor={C.teal}
+        cursorColor={C.teal}
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
         style={[t(28, 800), { flex: 1, minWidth: 0, height: 52, padding: 0 }]}
@@ -128,7 +128,7 @@ export function AmountField({ value, onChangeText, accent }: { value: string; on
   );
 }
 
-/** Grid of selectable options (tipo de ingreso / categoría). */
+/** Grid of selectable options (tipo de ingreso / categoría): teal when selected, white otherwise. */
 export function OptionGrid<T extends string>({ options, value, onPick, columns, height, fontSize }: {
   options: readonly T[];
   value: string;
@@ -153,11 +153,11 @@ export function OptionGrid<T extends string>({ options, value, onPick, columns, 
                 justifyContent: "center",
                 paddingHorizontal: 4,
                 borderWidth: 1,
-                backgroundColor: active ? "rgba(18,163,184,.55)" : "rgba(255,255,255,.08)",
-                borderColor: active ? C.cyan : "rgba(255,255,255,.22)",
+                backgroundColor: active ? C.teal : C.card,
+                borderColor: active ? C.teal : C.border,
               }}
             >
-              <Text numberOfLines={1} adjustsFontSizeToFit style={t(fontSize, 700)}>
+              <Text numberOfLines={1} adjustsFontSizeToFit style={t(fontSize, 700, active ? C.white : C.ink)}>
                 {o}
               </Text>
             </Pressable>
@@ -168,17 +168,38 @@ export function OptionGrid<T extends string>({ options, value, onPick, columns, 
   );
 }
 
-export function PrimaryButton({ label, onPress }: { label: string; onPress: () => void }) {
+/** Pill filter (Todos / Ingresos / Egresos): ink when active, white with border otherwise. */
+export function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [primaryButton, pressed && { filter: "brightness(1.12)" }]}>
-      <Text style={t(14, 800, C.text, { letterSpacing: 0.56 })}>{label}</Text>
+    <Pressable
+      onPress={onPress}
+      style={{
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 999,
+        borderWidth: 1,
+        backgroundColor: active ? C.ink : C.card,
+        borderColor: active ? C.ink : C.border,
+      }}
+    >
+      <Text style={t(12, 700, active ? C.white : C.ink)}>{label}</Text>
     </Pressable>
   );
 }
 
-export function SecondaryButton({ label, onPress, color = C.blueSoft, borderColor }: { label: string; onPress: () => void; color?: string; borderColor?: string }) {
+export function PrimaryButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [secondaryButton, borderColor ? { borderColor } : null, pressed && { opacity: 0.8 }]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [primaryButton, pressed && { backgroundColor: C.tealDark }]}>
+      <Text style={t(14, 800, C.white, { letterSpacing: 0.56 })}>{label}</Text>
+    </Pressable>
+  );
+}
+
+/** Secundario (navy outline) or Destructivo (red outline, pass `danger`). */
+export function SecondaryButton({ label, onPress, danger }: { label: string; onPress: () => void; danger?: boolean }) {
+  const color = danger ? C.red : C.navy;
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [secondaryButton, { borderColor: color }, pressed && { backgroundColor: C.bg }]}>
       <Text style={t(13.5, 800, color)}>{label}</Text>
     </Pressable>
   );
@@ -187,23 +208,13 @@ export function SecondaryButton({ label, onPress, color = C.blueSoft, borderColo
 /** Sticky bottom action bar used by both forms. */
 export function BottomBar({ children, bottomInset }: { children: ReactNode; bottomInset: number }) {
   return (
-    <View
-      style={{
-        paddingTop: 14,
-        paddingHorizontal: 20,
-        paddingBottom: 22 + bottomInset,
-        backgroundColor: "rgba(10,27,42,.35)",
-        borderTopWidth: 1,
-        borderTopColor: "rgba(255,255,255,.12)",
-        gap: 10,
-      }}
-    >
+    <View style={{ paddingTop: 14, paddingHorizontal: 20, paddingBottom: 22 + bottomInset, backgroundColor: C.card, borderTopWidth: 1, borderTopColor: C.line, gap: 10 }}>
       {children}
     </View>
   );
 }
 
-/** Green dot with the "livePulse" ring. */
+/** Mint dot with the "livePulse" ring. */
 export function LiveDot() {
   const p = useRef(new Animated.Value(0)).current;
   useEffect(() => {

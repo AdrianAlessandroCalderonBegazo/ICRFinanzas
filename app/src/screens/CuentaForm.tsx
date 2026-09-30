@@ -70,11 +70,11 @@ export function CuentaForm({ cuenta, balance, onBack, onSave, topInset, bottomIn
                 setSaldo(cleanAmt(v));
                 setErr((x) => ({ ...x, saldo: null }));
               }}
-              accent={C.cyan}
+              accent={C.teal}
             />
             <ErrorText>{err.saldo}</ErrorText>
             {diff !== 0 && !err.saldo ? (
-              <Text style={t(12, 700, diff > 0 ? C.cyan : C.red, { marginTop: 8 })}>
+              <Text style={t(12, 700, diff > 0 ? C.teal : C.red, { marginTop: 8 })}>
                 {diff > 0 ? "+" : "−"}
                 {money(Math.abs(diff))} respecto al saldo actual ({money(balance)})
               </Text>

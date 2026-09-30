@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, Image, Pressable, ScrollView, Text, View } from "react-native";
-import { C, glass, kicker, t } from "../theme";
+import { C, card, kicker, t } from "../theme";
 import { ErrorText, Header, Screen, SecondaryButton } from "../components/ui";
 
 export type CapState = { status: "idle" | "busy"; uri: string | null; step: number; error: string | null };
@@ -29,17 +29,17 @@ export function Captura({ cap, onBack, onGallery, onCamera, onCancel, topInset, 
                 borderRadius: 18,
                 borderWidth: 1.5,
                 borderStyle: "dashed",
-                borderColor: "rgba(255,255,255,.35)",
-                backgroundColor: pressed ? "rgba(255,255,255,.1)" : "rgba(255,255,255,.065)",
+                borderColor: C.placeholder,
+                backgroundColor: pressed ? C.stripeB : C.stripeA,
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 12,
               })}
             >
               <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: C.navy, alignItems: "center", justifyContent: "center" }}>
-                <Text style={t(26, 700)}>↑</Text>
+                <Text style={t(26, 700, C.white)}>↑</Text>
               </View>
-              <Text style={t(14, 800)}>Toca para subir una foto</Text>
+              <Text style={t(14, 800, C.ink)}>Toca para subir una foto</Text>
               <Text style={t(11.5, 400, C.muted, { maxWidth: 220, textAlign: "center" })}>JPG o PNG. Asegúrate de que el monto y la fecha se lean bien.</Text>
             </Pressable>
             <ErrorText>{cap.error}</ErrorText>
@@ -47,14 +47,14 @@ export function Captura({ cap, onBack, onGallery, onCamera, onCancel, topInset, 
           </>
         ) : (
           <>
-            <View style={{ height: 340, borderRadius: 18, overflow: "hidden", backgroundColor: "rgba(0,0,0,.35)", borderWidth: 1, borderColor: "rgba(255,255,255,.18)" }}>
+            <View style={{ height: 340, borderRadius: 18, overflow: "hidden", backgroundColor: C.ink }}>
               {cap.uri ? (
                 <Image source={{ uri: cap.uri }} resizeMode="contain" style={{ width: "100%", height: "100%", opacity: 0.85 }} accessibilityLabel="Comprobante" />
               ) : null}
               <ScanLine />
             </View>
-            <View style={[glass(0.09, 0.16, 16), { paddingVertical: 14, paddingHorizontal: 16, gap: 10 }]}>
-              <Text style={kicker(C.text, 12)}>ANALIZANDO COMPROBANTE…</Text>
+            <View style={[card(16), { paddingVertical: 14, paddingHorizontal: 16, gap: 10 }]}>
+              <Text style={kicker(C.ink, 12)}>ANALIZANDO COMPROBANTE…</Text>
               {STEPS.map((label, i) => {
                 const done = cap.step > i;
                 const cur = cap.step === i;
@@ -67,17 +67,17 @@ export function Captura({ cap, onBack, onGallery, onCamera, onCancel, topInset, 
                         borderRadius: 6,
                         alignItems: "center",
                         justifyContent: "center",
-                        backgroundColor: done ? C.cyanStrong : cur ? "rgba(127,227,238,.6)" : "rgba(255,255,255,.18)",
+                        backgroundColor: done ? C.teal : cur ? C.cyan : C.border,
                       }}
                     >
-                      {done ? <Text style={t(11, 800)}>✓</Text> : null}
+                      {done ? <Text style={t(11, 800, C.white)}>✓</Text> : null}
                     </View>
-                    <Text style={t(12.5, 600, done || cur ? C.text : "rgba(255,255,255,.45)")}>{label}</Text>
+                    <Text style={t(12.5, 600, done || cur ? C.ink : C.placeholder)}>{label}</Text>
                   </View>
                 );
               })}
             </View>
-            <SecondaryButton label="Cancelar" onPress={onCancel} color={C.red} borderColor={C.red} />
+            <SecondaryButton label="Cancelar" onPress={onCancel} danger />
           </>
         )}
       </ScrollView>

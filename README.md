@@ -1,6 +1,6 @@
 # ICR Finanzas — Caja de Obra
 
-App Android para registrar **ingresos y egresos** de obra con el saldo de la cuenta **en vivo**, en estilo *glassmorphism* (diseño "Caja de Obra Glass"). Funciona **sin internet**.
+App Android para registrar **ingresos y egresos** de obra con el saldo de la cuenta **en vivo**, con el diseño claro de ICR (Manrope, teal #0E7490 · cyan #12A3B8 · navy #124C8C · tinta #0D2233). Funciona **sin internet**.
 
 ```
 app/      App Android (Expo · React Native · TypeScript)

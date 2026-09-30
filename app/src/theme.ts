@@ -1,24 +1,32 @@
 import type { TextStyle, ViewStyle } from "react-native";
 
+/** Palette from the ICR design system: teal, cyan, navy, tint and ink, on a light blue-gray background. */
 export const C = {
-  bg: "#0A1B2A",
-  text: "#fff",
-  muted: "rgba(255,255,255,.7)",
-  placeholder: "rgba(255,255,255,.45)",
-  cyan: "#7FE3EE",
-  cyanStrong: "#12A3B8",
-  teal: "#0E7490",
-  navy: "#124C8C",
-  blueSoft: "#B8D2F5",
-  red: "#FFA3A3",
-  mint: "#7DFFD6",
+  bg: "#F3F7F9",
+  card: "#FFFFFF",
   ink: "#0D2233",
-  divider: "rgba(255,255,255,.1)",
+  text: "#0D2233",
+  muted: "#5B7285", // "Apoyo": blue-gray supporting text
+  soft: "#44606F",
+  placeholder: "#9FB6C3",
+  border: "#D5E0E8", // inputs and inactive chips
+  line: "#E1E9EE", // card borders and dividers
+  teal: "#0E7490", // primary
+  tealDark: "#0B6680", // primary pressed
+  cyan: "#12A3B8",
+  navy: "#124C8C",
+  tint: "#D8F3F4", // access cards, AUTO badge, flash
+  tintPressed: "#CBEEF0",
+  red: "#B93A3A",
+  mint: "#7DFFD6",
+  white: "#FFFFFF",
+  stripeA: "#EEF3F6",
+  stripeB: "#E6EDF1",
+  outIcon: "#E4ECF5",
 };
 
-// Layered radial gradients from the design's phone frame.
-export const APP_BACKGROUND =
-  "radial-gradient(circle at 12% 8%, #12A3B8 0%, transparent 42%), radial-gradient(circle at 95% 38%, #2a5fb0 0%, transparent 46%), radial-gradient(circle at 10% 78%, #0E7490 0%, transparent 40%), radial-gradient(circle at 85% 100%, #1c7fa0 0%, transparent 38%)";
+/** Teal gradient used by the home and ingreso headers. */
+export const TEAL_GRADIENT = "linear-gradient(160deg, #0E7490 0%, #12A3B8 100%)";
 
 type Weight = 400 | 500 | 600 | 700 | 800;
 const FAMILY: Record<Weight, string> = {
@@ -30,7 +38,7 @@ const FAMILY: Record<Weight, string> = {
 };
 
 /** Text style with Manrope at the given weight (Android needs one family per weight). */
-export const t = (size: number, weight: Weight = 400, color: string = C.text, extra: TextStyle = {}): TextStyle => ({
+export const t = (size: number, weight: Weight = 400, color: string = C.ink, extra: TextStyle = {}): TextStyle => ({
   fontFamily: FAMILY[weight],
   fontSize: size,
   color,
@@ -38,39 +46,50 @@ export const t = (size: number, weight: Weight = 400, color: string = C.text, ex
   ...extra,
 });
 
-/** Uppercase tracked label used above every field ("FECHA", "MONTO"...). */
-export const kicker = (color: string = C.muted, size = 10.5): TextStyle =>
-  t(size, 800, color, { letterSpacing: size * 0.1 });
+/** Etiqueta: 10.5 / 800, uppercase, tracked. */
+export const kicker = (color: string = C.muted, size = 10.5): TextStyle => t(size, 800, color, { letterSpacing: size * 0.1 });
 
-export const glass = (fill = 0.09, border = 0.16, radius = 16): ViewStyle => ({
-  backgroundColor: `rgba(255,255,255,${fill})`,
+/** White card with a hairline border. */
+export const card = (radius = 16): ViewStyle => ({
+  backgroundColor: C.card,
   borderWidth: 1,
-  borderColor: `rgba(255,255,255,${border})`,
+  borderColor: C.line,
   borderRadius: radius,
 });
 
+/** White card lifted with a soft shadow (the INGRESO / EGRESO tiles). */
+export const raisedCard = (radius = 18): ViewStyle => ({
+  backgroundColor: C.card,
+  borderRadius: radius,
+  boxShadow: "0px 6px 20px rgba(13,34,51,0.10)",
+});
+
 export const inputBox: ViewStyle = {
-  ...glass(0.09, 0.22, 12),
+  backgroundColor: C.card,
+  borderWidth: 1,
+  borderColor: C.border,
+  borderRadius: 12,
   height: 48,
   paddingHorizontal: 14,
   justifyContent: "center",
 };
 
+/** Primario: solid teal. */
 export const primaryButton: ViewStyle = {
   height: 54,
   borderRadius: 14,
   alignItems: "center",
   justifyContent: "center",
-  experimental_backgroundImage: "linear-gradient(135deg, #12A3B8, #0E7490)",
-  boxShadow: "0px 10px 28px rgba(18,163,184,0.45), inset 0px 1px 0px rgba(255,255,255,0.3)",
+  backgroundColor: C.teal,
 };
 
+/** Secundario: white with a colored outline. */
 export const secondaryButton: ViewStyle = {
   height: 50,
   borderRadius: 14,
   borderWidth: 1.5,
-  borderColor: "rgba(255,255,255,.35)",
-  backgroundColor: "rgba(255,255,255,.09)",
+  borderColor: C.navy,
+  backgroundColor: C.card,
   alignItems: "center",
   justifyContent: "center",
 };

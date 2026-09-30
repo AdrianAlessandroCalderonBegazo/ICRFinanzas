@@ -36,12 +36,12 @@ export function EgresoForm({ egr, set, err, balance, fromCapture, autoVals, thum
         />
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 18, paddingHorizontal: 20, paddingBottom: 24, gap: 16 }} keyboardShouldPersistTaps="handled">
           {fromCapture ? (
-            <View style={{ flexDirection: "row", gap: 12, alignItems: "center", backgroundColor: "rgba(18,163,184,.24)", borderRadius: 14, padding: 12 }}>
-              <View style={{ width: 46, height: 56, borderRadius: 8, overflow: "hidden", backgroundColor: "rgba(255,255,255,.09)" }}>
+            <View style={{ flexDirection: "row", gap: 12, alignItems: "center", backgroundColor: C.tint, borderRadius: 14, padding: 12 }}>
+              <View style={{ width: 46, height: 56, borderRadius: 8, overflow: "hidden", backgroundColor: C.stripeB }}>
                 {thumbUri ? <Image source={{ uri: thumbUri }} style={{ width: "100%", height: "100%" }} resizeMode="cover" /> : null}
               </View>
-              <Text style={t(12, 400, C.text, { flex: 1, lineHeight: 17 })}>
-                <Text style={t(12, 800)}>Datos detectados automáticamente.</Text> Revisa y corrige lo que sea necesario.
+              <Text style={t(12, 400, C.ink, { flex: 1, lineHeight: 17 })}>
+                <Text style={t(12, 800, C.ink)}>Datos detectados automáticamente.</Text> Revisa y corrige lo que sea necesario.
               </Text>
             </View>
           ) : null}
@@ -69,9 +69,9 @@ export function EgresoForm({ egr, set, err, balance, fromCapture, autoVals, thum
                 <Pressable
                   key={c}
                   onPress={() => set("ciudad", c)}
-                  style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,.22)", backgroundColor: "rgba(255,255,255,.08)" }}
+                  style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: C.border, backgroundColor: C.card }}
                 >
-                  <Text style={t(12, 700)}>{c}</Text>
+                  <Text style={t(12, 700, C.ink)}>{c}</Text>
                 </Pressable>
               ))}
             </View>
@@ -111,10 +111,10 @@ export function EgresoForm({ egr, set, err, balance, fromCapture, autoVals, thum
           ) : null}
           <View>
             <FieldLabel auto={auto("monto")}>MONTO</FieldLabel>
-            <AmountField value={egr.monto} onChangeText={(v) => set("monto", cleanAmt(v))} accent={C.blueSoft} />
+            <AmountField value={egr.monto} onChangeText={(v) => set("monto", cleanAmt(v))} accent={C.navy} />
             <ErrorText>{err.monto}</ErrorText>
             {amt > 0 ? (
-              <Text style={t(12, 700, balance - amt < 0 ? C.red : C.blueSoft, { marginTop: 8 })}>Nuevo saldo: {money(balance - amt)}</Text>
+              <Text style={t(12, 700, balance - amt < 0 ? C.red : C.navy, { marginTop: 8 })}>Nuevo saldo: {money(balance - amt)}</Text>
             ) : null}
           </View>
         </ScrollView>

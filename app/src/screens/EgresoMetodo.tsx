@@ -15,7 +15,7 @@ export function EgresoMetodo({ onBack, onManual, onCaptura, topInset, bottomInse
       <Header kicker="NUEVO REGISTRO" title="Registrar egreso" sub="¿Cómo quieres registrarlo?" onBack={onBack} topInset={topInset} />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 22, paddingHorizontal: 20, paddingBottom: 22 + bottomInset, gap: 14 }}>
         <MethodCard
-          icon={<Text style={t(12, 800, C.text, { letterSpacing: 0.72 })}>ABC</Text>}
+          icon={<Text style={t(12, 800, C.white, { letterSpacing: 0.72 })}>ABC</Text>}
           iconBg={C.teal}
           title="REGISTRO MANUAL"
           sub="Completa el formulario con los datos del gasto"
@@ -48,15 +48,15 @@ function MethodCard({ icon, iconBg, title, sub, onPress }: { icon: ReactNode; ic
         gap: 14,
         borderRadius: 18,
         padding: 18,
-        backgroundColor: pressed ? "rgba(18,163,184,.34)" : "rgba(18,163,184,.24)",
+        backgroundColor: pressed ? C.tintPressed : C.tint,
       })}
     >
       <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: iconBg, alignItems: "center", justifyContent: "center" }}>{icon}</View>
       <View style={{ flex: 1 }}>
-        <Text style={t(14, 800, C.text, { letterSpacing: 0.42 })}>{title}</Text>
-        <Text style={t(12, 400, "rgba(255,255,255,.75)", { marginTop: 3 })}>{sub}</Text>
+        <Text style={t(14, 800, C.ink, { letterSpacing: 0.42 })}>{title}</Text>
+        <Text style={t(12, 400, C.soft, { marginTop: 3 })}>{sub}</Text>
       </View>
-      <Text style={t(16, 800, C.cyan)}>›</Text>
+      <Text style={t(16, 800, C.teal)}>›</Text>
     </Pressable>
   );
 }

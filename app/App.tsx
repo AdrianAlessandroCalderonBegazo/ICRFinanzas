@@ -6,7 +6,7 @@ import * as ImagePicker from "expo-image-picker";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import { useFonts, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold } from "@expo-google-fonts/manrope";
 
-import { APP_BACKGROUND, C } from "./src/theme";
+import { C } from "./src/theme";
 import { money, num, fdate } from "./src/lib/format";
 import { catLabel, DEFAULT_CUENTA, emptyEgr, emptyIng, loadStore, saveStore, type Cuenta, type Egreso, type Ingreso, type Mov } from "./src/lib/data";
 import { leerComprobante } from "./src/lib/ocr";
@@ -29,7 +29,7 @@ export default function App() {
   const [fontsLoaded] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold });
   return (
     <SafeAreaProvider>
-      <View style={{ flex: 1, backgroundColor: C.bg, experimental_backgroundImage: APP_BACKGROUND }}>
+      <View style={{ flex: 1, backgroundColor: C.bg }}>
         <StatusBar style="light" />
         {fontsLoaded ? <CajaDeObra /> : null}
       </View>
@@ -277,7 +277,7 @@ function CajaDeObra() {
   if (sheet === "in") {
     const rows: [string, string][] = [["Cuenta", cuentaLabel], ["Fecha", fdate(ing.fecha)], ["Tipo", ing.tipo]];
     if (ing.detalle.trim()) rows.push(["Detalle", ing.detalle.trim()]);
-    sheetData = { kicker: "CONFIRMA TU INGRESO", amount: `+${money(iAmt)}`, amountColor: C.cyan, rows, newBalance: money(balance + iAmt), cta: "REGISTRAR INGRESO" };
+    sheetData = { kicker: "CONFIRMA TU INGRESO", amount: `+${money(iAmt)}`, amountColor: C.teal, rows, newBalance: money(balance + iAmt), cta: "REGISTRAR INGRESO" };
   } else if (sheet === "out") {
     sheetData = {
       kicker: "CONFIRMA TU EGRESO",

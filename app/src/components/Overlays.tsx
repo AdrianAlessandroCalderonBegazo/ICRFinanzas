@@ -26,9 +26,7 @@ export function ConfirmSheet({ data, onConfirm, onClose, bottomInset }: { data: 
       <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Cerrar" />
       <Animated.View
         style={{
-          backgroundColor: "rgba(18,44,64,.94)",
-          borderTopWidth: 1,
-          borderTopColor: "rgba(255,255,255,.22)",
+          backgroundColor: C.card,
           borderTopLeftRadius: 26,
           borderTopRightRadius: 26,
           paddingTop: 10,
@@ -37,17 +35,17 @@ export function ConfirmSheet({ data, onConfirm, onClose, bottomInset }: { data: 
           transform: [{ translateY: slide }],
         }}
       >
-        <View style={{ width: 40, height: 4, borderRadius: 4, backgroundColor: "rgba(255,255,255,.22)", alignSelf: "center", marginBottom: 18 }} />
-        <Text style={kicker()}>{data.kicker}</Text>
+        <View style={{ width: 40, height: 4, borderRadius: 4, backgroundColor: C.border, alignSelf: "center", marginBottom: 18 }} />
+        <Text style={kicker(C.muted)}>{data.kicker}</Text>
         <Text style={t(30, 800, data.amountColor, { marginTop: 6, marginBottom: 16, fontVariant: ["tabular-nums"] })}>{data.amount}</Text>
-        <View style={{ borderWidth: 1, borderColor: "rgba(255,255,255,.16)", borderRadius: 14, overflow: "hidden", marginBottom: 14 }}>
+        <View style={{ borderWidth: 1, borderColor: C.line, borderRadius: 14, overflow: "hidden", marginBottom: 14 }}>
           {data.rows.map(([k, v], i) => (
             <View
               key={k}
-              style={{ flexDirection: "row", justifyContent: "space-between", gap: 12, paddingVertical: 11, paddingHorizontal: 14, borderTopWidth: i ? 1 : 0, borderTopColor: C.divider }}
+              style={{ flexDirection: "row", justifyContent: "space-between", gap: 12, paddingVertical: 11, paddingHorizontal: 14, borderTopWidth: i ? 1 : 0, borderTopColor: C.stripeA }}
             >
               <Text style={t(12.5, 400, C.muted)}>{k}</Text>
-              <Text style={t(12.5, 700, C.text, { textAlign: "right", flexShrink: 1 })}>{v}</Text>
+              <Text style={t(12.5, 700, C.ink, { textAlign: "right", flexShrink: 1 })}>{v}</Text>
             </View>
           ))}
         </View>
@@ -56,7 +54,7 @@ export function ConfirmSheet({ data, onConfirm, onClose, bottomInset }: { data: 
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
-            backgroundColor: "rgba(255,255,255,.08)",
+            backgroundColor: C.bg,
             borderRadius: 12,
             paddingVertical: 12,
             paddingHorizontal: 14,
@@ -64,7 +62,7 @@ export function ConfirmSheet({ data, onConfirm, onClose, bottomInset }: { data: 
           }}
         >
           <Text style={t(12, 400, C.muted)}>Saldo después del registro</Text>
-          <Text style={t(14, 800)}>{data.newBalance}</Text>
+          <Text style={t(14, 800, C.ink)}>{data.newBalance}</Text>
         </View>
         <View style={{ gap: 10 }}>
           <PrimaryButton label={data.cta} onPress={onConfirm} />
@@ -89,9 +87,7 @@ export function SuccessToast({ title, sub, topInset }: { title: string; sub: str
         right: 18,
         top: 18 + topInset,
         zIndex: 6,
-        backgroundColor: "rgba(40,70,92,.92)",
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,.25)",
+        backgroundColor: C.ink,
         borderRadius: 16,
         paddingVertical: 14,
         paddingHorizontal: 16,
@@ -107,7 +103,7 @@ export function SuccessToast({ title, sub, topInset }: { title: string; sub: str
         <Text style={t(15, 800, C.ink)}>✓</Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={t(13, 800)}>{title}</Text>
+        <Text style={t(13, 800, C.white)}>{title}</Text>
         <Text style={t(11.5, 400, "rgba(255,255,255,.8)", { marginTop: 2 })}>{sub}</Text>
       </View>
     </Animated.View>
