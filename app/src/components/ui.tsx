@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Animated, Easing, Pressable, Text, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from "react-native";
-import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import { C, TEAL_GRADIENT, card, inputBox, kicker, primaryButton, secondaryButton, t } from "../theme";
-import { inputDate, isoDate, parseIso } from "../lib/format";
+
+export { DateField } from "./DateField";
 
 /** Full-screen container that fades in on mount (design: `animation: fadeIn .2s`). */
 export function Screen({ children }: { children: ReactNode }) {
@@ -93,23 +93,6 @@ export function TextField(props: TextInputProps) {
       }}
       style={[inputBox, t(14, 600), focus && focusRing, props.style]}
     />
-  );
-}
-
-export function DateField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const open = () =>
-    DateTimePickerAndroid.open({
-      value: value ? parseIso(value) : new Date(),
-      mode: "date",
-      onChange: (e, d) => {
-        if (e.type === "set" && d) onChange(isoDate(d));
-      },
-    });
-  return (
-    <Pressable onPress={open} style={[inputBox, { flexDirection: "row", alignItems: "center", paddingHorizontal: 12 }]}>
-      <Text style={t(13.5, 600, value ? C.ink : C.placeholder, { flex: 1 })}>{value ? inputDate(value) : "dd/mm/aaaa"}</Text>
-      <View style={{ width: 16, height: 16, borderRadius: 3, borderWidth: 1.5, borderColor: C.muted, borderTopWidth: 4 }} />
-    </Pressable>
   );
 }
 
