@@ -1,0 +1,37 @@
+name: Tests y build web
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: app/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Tests (parseComprobante)
+        run: npm test
+
+      # Verifica que la build web (lo que se despliega en
+      # finanzas.inversionesicr.com, ver ../Dockerfile.web) sigue
+      # compilando — sin esto, un cambio podría romper el export de Expo sin
+      # que ningún otro paso lo note.
+      - name: Build web (Expo export)
+        run: npx expo export -p web --output-dir /tmp/dist-ci
