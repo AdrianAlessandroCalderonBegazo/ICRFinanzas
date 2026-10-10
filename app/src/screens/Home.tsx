@@ -26,6 +26,7 @@ export function Home({ balance, animFrom, cuenta, onCuenta, movs, hlId, filter, 
   const monthIn = movs.filter((m) => m.kind === "in" && m.date.slice(0, 7) === ym).reduce((a, m) => a + m.amount, 0);
   const monthOut = movs.filter((m) => m.kind === "out" && m.date.slice(0, 7) === ym).reduce((a, m) => a + m.amount, 0);
   const list = movs.filter((m) => filter === "Todos" || (filter === "Ingresos" ? m.kind === "in" : m.kind === "out"));
+  const pendientes = movs.filter((m) => m.synced === false).length;
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 28 + bottomInset }} showsVerticalScrollIndicator={false}>
@@ -79,6 +80,15 @@ export function Home({ balance, animFrom, cuenta, onCuenta, movs, hlId, filter, 
           <Text style={t(15, 800, C.red, { marginTop: 4 })} numberOfLines={1}>{money(monthOut)}</Text>
         </View>
       </View>
+
+      {pendientes > 0 ? (
+        <View style={{ marginHorizontal: 18, marginTop: 14, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#FBEFE2", borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14 }}>
+          <Text style={t(12, 700, "#A6621A")}>⟲</Text>
+          <Text style={t(11.5, 700, "#A6621A", { flex: 1 })}>
+            {pendientes} movimiento{pendientes > 1 ? "s" : ""} sin sincronizar con el ERP — se reintenta solo cuando haya conexión.
+          </Text>
+        </View>
+      ) : null}
 
       <View style={{ paddingTop: 22, paddingHorizontal: 18 }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>

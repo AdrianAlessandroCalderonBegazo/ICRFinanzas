@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, ScrollView, Text, View } from "react-native";
 import { C, t } from "../theme";
-import { AmountField, BottomBar, ErrorText, FieldLabel, Header, PrimaryButton, Screen, TextField } from "../components/ui";
+import { AmountField, BottomBar, ErrorText, FieldLabel, Header, PrimaryButton, Screen, SecondaryButton, TextField } from "../components/ui";
 import { cleanAmt, money, num } from "../lib/format";
 import type { Cuenta } from "../lib/data";
 import type { Errors } from "./IngresoForm";
 
 /** Edits which bank account the app tracks and its current balance. */
-export function CuentaForm({ cuenta, balance, onBack, onSave, topInset, bottomInset }: {
+export function CuentaForm({ cuenta, balance, sessionLabel, onBack, onSave, onLogout, topInset, bottomInset }: {
   cuenta: Cuenta;
   balance: number;
+  sessionLabel: string;
   onBack: () => void;
   onSave: (cuenta: Cuenta, balance: number) => void;
+  onLogout: () => void;
   topInset: number;
   bottomInset: number;
 }) {
@@ -83,6 +85,11 @@ export function CuentaForm({ cuenta, balance, onBack, onSave, topInset, bottomIn
           <Text style={t(11.5, 400, C.muted, { lineHeight: 16 })}>
             Cambiar el saldo reemplaza el monto actual; no crea un ingreso ni un egreso en los movimientos.
           </Text>
+          <View style={{ borderTopWidth: 1, borderTopColor: C.line, paddingTop: 16, marginTop: 4 }}>
+            <FieldLabel>CONECTADO AL ERP COMO</FieldLabel>
+            <Text style={t(12.5, 700, C.ink, { marginBottom: 12 })}>{sessionLabel}</Text>
+            <SecondaryButton label="CERRAR SESIÓN" onPress={onLogout} danger />
+          </View>
         </ScrollView>
         <BottomBar bottomInset={bottomInset}>
           <PrimaryButton label="GUARDAR CAMBIOS" onPress={save} />

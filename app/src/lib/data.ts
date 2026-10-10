@@ -24,6 +24,8 @@ export type Mov = {
   persona?: string;
   ciudad?: string;
   captura?: boolean;
+  /** Undefined on movements saved before the ERP sync existed; otherwise whether it reached the ERP already. */
+  synced?: boolean;
 };
 
 export type Ingreso = { fecha: string; tipo: TipoIngreso | ""; detalle: string; monto: string };

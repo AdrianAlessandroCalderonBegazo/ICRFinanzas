@@ -10,7 +10,9 @@ import { C, t } from "./src/theme";
 import { money, num, fdate } from "./src/lib/format";
 import { catLabel, DEFAULT_CUENTA, emptyEgr, emptyIng, loadStore, saveStore, type Cuenta, type Egreso, type Ingreso, type Mov } from "./src/lib/data";
 import { leerComprobante } from "./src/lib/ocr";
+import { ApiError, loadSession, logout, registrarEgreso, registrarIngreso, type Session } from "./src/lib/api";
 import { Home } from "./src/screens/Home";
+import { Login } from "./src/screens/Login";
 import { IngresoForm, type Errors } from "./src/screens/IngresoForm";
 import { EgresoMetodo } from "./src/screens/EgresoMetodo";
 import { Captura, type CapState } from "./src/screens/Captura";
@@ -44,6 +46,7 @@ export default function App() {
 function CajaDeObra() {
   const insets = useSafeAreaInsets();
   const [ready, setReady] = useState(false);
+  const [session, setSession] = useState<Session | null | undefined>(undefined); // undefined = aún no se sabe
   const [screen, setScreen] = useState<ScreenName>("home");
   const [balance, setBalance] = useState(0);
   const [cuenta, setCuenta] = useState<Cuenta>(DEFAULT_CUENTA);
@@ -66,10 +69,11 @@ function CajaDeObra() {
   const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
 
   useEffect(() => {
-    loadStore().then((s) => {
+    Promise.all([loadStore(), loadSession()]).then(([s, sesion]) => {
       setBalance(s.balance);
       setCuenta(s.cuenta);
       setMovs(s.movs);
+      setSession(sesion);
       setReady(true);
     });
     return () => {
@@ -77,6 +81,47 @@ function CajaDeObra() {
       job.current?.abort();
     };
   }, []);
+
+  /** Empuja un movimiento ya guardado localmente al ERP; si falla, queda `synced:false` para reintentar luego. */
+  const pushToErp = async (mov: Mov) => {
+    try {
+      if (mov.kind === "in") {
+        await registrarIngreso({ fecha: mov.date, tipo: mov.cat as Ingreso["tipo"], detalle: mov.title, monto: String(mov.amount) });
+      } else {
+        const [categoria, subcategoria] = mov.cat.split(" · ");
+        await registrarEgreso({
+          fecha: mov.date, persona: mov.persona || "", desc: mov.title, ciudad: mov.ciudad || "",
+          categoria: categoria as Egreso["categoria"], subcategoria: (subcategoria as Egreso["subcategoria"]) || "", monto: String(mov.amount),
+        });
+      }
+      const fresh = await loadStore();
+      await saveStore({ ...fresh, movs: fresh.movs.map((m) => (m.id === mov.id ? { ...m, synced: true } : m)) });
+      setMovs((cur) => cur.map((m) => (m.id === mov.id ? { ...m, synced: true } : m)));
+    } catch (e) {
+      if (!(e instanceof ApiError)) console.error("No se pudo sincronizar el movimiento con el ERP:", e);
+    }
+  };
+
+  // Reintenta cualquier movimiento que quedó sin sincronizar (red caída, ERP
+  // caído al momento de confirmar) en cuanto hay sesión — p.ej. al abrir la
+  // app de nuevo con señal. Lee/escribe el store fresco en cada movimiento
+  // (no el `movs` del closure) para nunca pisar un balance/cuenta más nuevo
+  // que haya guardado otra acción mientras esto corría.
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    (async () => {
+      const pendientes = movs.filter((m) => m.synced === false);
+      for (const mov of pendientes) {
+        if (cancelled) return;
+        await pushToErp(mov);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, ready]);
 
   const go = (s: ScreenName) => {
     setScreen(s);
@@ -122,15 +167,16 @@ function CajaDeObra() {
     let amt: number;
     if (kind === "in") {
       amt = num(ing.monto);
-      mov = { id, kind, title: ing.detalle.trim() || ing.tipo, cat: ing.tipo, date: ing.fecha, amount: amt };
+      mov = { id, kind, title: ing.detalle.trim() || ing.tipo, cat: ing.tipo, date: ing.fecha, amount: amt, synced: false };
     } else {
       amt = num(egr.monto);
-      mov = { id, kind, title: egr.desc.trim(), cat: catLabel(egr.categoria, egr.subcategoria), date: egr.fecha, amount: amt, persona: egr.persona.trim(), ciudad: egr.ciudad.trim(), captura: fromCapture };
+      mov = { id, kind, title: egr.desc.trim(), cat: catLabel(egr.categoria, egr.subcategoria), date: egr.fecha, amount: amt, persona: egr.persona.trim(), ciudad: egr.ciudad.trim(), captura: fromCapture, synced: false };
     }
     const from = balance;
     const to = +(from + (kind === "in" ? amt : -amt)).toFixed(2);
     const nextMovs = [mov, ...movs];
     saveStore({ balance: to, cuenta, movs: nextMovs });
+    if (session) pushToErp(mov); // en segundo plano: la pantalla no espera a la red, igual que antes
 
     setScreen("home");
     setSheet(null);
@@ -257,6 +303,7 @@ function CajaDeObra() {
   }, []);
 
   if (!ready) return null;
+  if (!session) return <Login onLoggedIn={() => loadSession().then(setSession)} topInset={insets.top} bottomInset={insets.bottom} />;
 
   const iAmt = num(ing.monto);
   const eAmt = num(egr.monto);
@@ -310,7 +357,17 @@ function CajaDeObra() {
           {...inset}
         />
       )}
-      {screen === "cuenta" && <CuentaForm cuenta={cuenta} balance={balance} onBack={() => go("home")} onSave={saveCuenta} {...inset} />}
+      {screen === "cuenta" && (
+        <CuentaForm
+          cuenta={cuenta}
+          balance={balance}
+          sessionLabel={`${session.nombre} · ${session.email}`}
+          onBack={() => go("home")}
+          onSave={saveCuenta}
+          onLogout={() => logout().then(() => setSession(null))}
+          {...inset}
+        />
+      )}
       {screen === "ingreso" && <IngresoForm ing={ing} set={setIngField} err={err} balance={balance} onBack={() => go("home")} onReview={reviewIngreso} {...inset} />}
       {screen === "metodo" && (
         <EgresoMetodo
